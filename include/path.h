@@ -27,3 +27,11 @@ struct Path {
 
   }
 };
+
+// from path, generate uniform distributed sphere direction
+Vec3 path_to_dir(Path& path) {
+  double z = path.next() * 2 - 1;
+  double r = cathetus(1, z);
+  double theta = path.next() * M_PI * 2;
+  return Vec3(r * sin(theta), r * cos(theta), z);
+}
