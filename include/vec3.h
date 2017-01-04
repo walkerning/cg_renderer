@@ -1,6 +1,9 @@
 #pragma once
 #include <cmath>
 
+#define MIN(x, y) (x) >= (y)? (y) : (x)
+#define MAX(x, y) (x) >= (y)? (x) : (y)
+
 struct Vec3 {
   double x;
   double y;
@@ -23,14 +26,12 @@ struct Vec3 {
   Vec3 operator*(double scalar) const { return Vec3(x * scalar, y * scalar, z * scalar); }
   Vec3 operator/(double scalar) const { return Vec3(x / scalar, y / scalar, z / scalar); }
 
+  double max() const { return MAX(MAX(x, y), z); }
   double norm() const { return sqrt(x * x + y * y + z * z); }
   Vec3& normalize() { return *this = *this * (1 / norm()); }
 
   double operator[](int index) const { return *(&x + index); }
 };
-
-#define MIN(x, y) (x) >= (y)? (y) : (x)
-#define MAX(x, y) (x) >= (y)? (x) : (y)
 
 Vec3 min_(Vec3 a, Vec3 b) {
   return Vec3(MIN(a.x, b.x), MIN(a.y, b.y), MIN(a.z, b.z));

@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include "env.h"
 
+typedef bool (*cb)(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path, Object* obj, Vec3 intersection, BRDF* brdf, int depth) TraceCallback;
 typedef std::unordered_map<std::string, std::string> RendererConf;
 
 std::string find_with_default(const RendererConf& conf, std::string key, std::string def) {
@@ -19,12 +20,24 @@ std::string find_with_default(const RendererConf& conf, std::string key, std::st
 }
 
 struct Renderer {
+  Vec3* im;
   Environment* env;
   int im_height, im_width;
+  double im_dist;
+  double im_size_ratio;
+
+  // Tracing configuration
+  int rr_depth; // after `rr_depth` tracing, apply unbiased Russian Roulette to prune tracing.
+  int max_depth; // max tracing depth
 
   Renderer(const RendererConf& conf) {
     im_height = std::stoi(find_with_default(conf, "im_height", "512"));
     im_width = std::stoi(find_with_default(conf, "im_width", "384"));
+    im_dist = std::stoi(find_with_default(conf, "im_dist", "100"));
+    im_size_ratio = std::stoi(find_with_default(conf, "im_size_ratio", "0.5"));
+    rr_depth = std::stoi(find_with_default(conf, "rr_depth", "10"));
+    max_depth = std::stoi(find_with_default(conf, "max_depth", "100"));
+    im = new Vec3[im_height * im_width];
   }
 
   inline static void set_env(Environment* env_) {
@@ -68,6 +81,12 @@ struct Renderer {
   }
 
   virtual void do_render() = 0;
+
+  void trace(Ray& ray, Path& path, TraceCallback cb, int max_depth=100);
+
+  virtual ~Renderer() {
+    delete[] im;
+  }
 };
 
 // registry for renderers

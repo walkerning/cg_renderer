@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+#include <cmath>
 #include "vec3.h"
 #include "path.h"
 
@@ -10,6 +11,9 @@ class BRDF {
 
   // A indirect get layer for mixed BRDF. Random select a BRDF that is working.
   virtual BRDF* get(Path& path) { return this; }
+
+  // For refraction materials
+  virtual void apply_absorption(Ray& ray, Vec3 start, Vec3 end, Vec3 normal) {}
 
   // FIXME: in fact intersection is unrelated to BRDF calculation... should it be moved out?
   virtual Ray sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersection) = 0;
@@ -36,14 +40,24 @@ class Refraction: BRDF {
   double refract_index; // 折射率
   Vec3 reflect_decay; // decay factor for different color
   Vec3 refract_decay;
+  Vec3 absorption_decay; // exponential absorption
 
   Refraction(double refract_index_,
              Vec3 reflect_decay_=Vec3(1, 1, 1),
-             Vec3 refract_decay_=Vec3(1, 1, 1)): refract_index(refract_index_),
-                                                 reflect_decay(reflect_decay_),
-                                                 refract_decay_(refract_decay_) {}
+             Vec3 refract_decay_=Vec3(1, 1, 1),
+             double absorption_decay_=1): refract_index(refract_index_),
+                                          reflect_decay(reflect_decay_),
+                                          refract_decay_(refract_decay_),
+                                          absorption_decay(absorption_decay_) {}
 
   virtual bool is_specular() { return true; }
+
+  virtual void apply_absorption(Ray& ray, Vec3 start, Vec3 end, Vec3 normal) {
+    if (ray.dir.dot(normal) < 0) {
+      return;
+    }
+    ray.flux *= exp(-(end - start).norm() * absorption_decay);
+  }
 
   virtual Ray sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersection) {
     Vec3 dir_in = ray_in.dir; // .normalize()
@@ -65,11 +79,11 @@ class Refraction: BRDF {
       double cos_out = cathetus(1, sin_out);
       double cos_in = -cos;
       // s-极化分量反射比
-      double R_s = ((cos_in - index_ratio * cos_out)/(cos_in + index_ratio * cos_out))^2;
+      double R_s = ((cos_in - index_ratio * cos_out)/(cos_in + index_ratio * cos_out));
       // p-极化分量反射比
-      double R_p = ((cos_out - index_ratio * cos_in)/(cos_out + index_ratio * cos_in))^2;
+      double R_p = ((cos_out - index_ratio * cos_in)/(cos_out + index_ratio * cos_in));
       // equal mix of s and p polarisations
-      double prob_reflect = (R_s + R_p) / 2;
+      double prob_reflect = (R_s * R_s + R_p * R_p) / 2;
       if (select < prob_reflect) {
         return Ray(intersection, reflect_out, reflect_decay);
       }
@@ -82,6 +96,8 @@ class Refraction: BRDF {
 
 class Diffuse: BRDF {
   Vec3 decay;
+
+  Diffuse(Vec3 decay_): decay(decay_) {}
 
   virtual bool is_specular() { return false; }
 
