@@ -8,7 +8,7 @@ void Environment::init_test_env() {
   // front
   add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 0.5)));
   // left
-  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(0.95, 0.95, 0.95));
+  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
   // right
   add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
   // ceil

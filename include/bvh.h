@@ -14,13 +14,13 @@ struct BVHNode {
 
 struct BVH {
   const vector<Object*>& objects;
-  const vector<BVHNode*> bvh_nodes; // for delete
+  vector<BVHNode*> bvh_nodes; // for delete
 
   BVHNode* root;
   Object** build_objs;
   int leaf_size;
 
-  BVH(const vector<Object*>& objects_): objects(objects_), build_objs(NULL) {}
+  BVH(const vector<Object*>& objects_);
 
   // build the BVH
   void build();
@@ -30,14 +30,7 @@ struct BVH {
 
   // Return intersect or not; the intersection object is in `obj`,
   // travel distance of ray is in `t`
-  bool intersect(const Ray& ray, Object* &obj, double& t) const;
+  bool intersect(const Ray& ray, Object* &obj, double& t);
 
-  ~BVH() {
-    if (build_objs) {
-      delete[] build_objs;
-    }
-    for (auto nodepp : bvh_nodes) {
-      delete (*nodepp);
-    }
-  }
+  ~BVH();
 };

@@ -11,7 +11,7 @@ using namespace std;
 // or we can make a simple one
 
 void print_help() {
-  cerr << "usage: ./main <render_config> [, <scene config>]"
+  cerr << "usage: ./main <render_config> [, <scene config>]" << endl;
 }
 
 int main(int argc, const char** argv) {
@@ -27,7 +27,7 @@ int main(int argc, const char** argv) {
   }
 
   Renderer* renderer = Renderer::get_renderer(string(argv[1]));
-  renderer.set_env(&env);
-  renderer.render();
+  renderer->set_env(&env);
+  renderer->render();
   return 0;
 }

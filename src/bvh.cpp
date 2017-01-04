@@ -1,5 +1,9 @@
 #include "bvh.h"
 
+BVH::BVH(const vector<Object*>& objects_): objects(objects_), build_objs(NULL) {
+  leaf_size = 1;
+}
+
 void BVH::build() {
   if (build_objs) {
     delete[] build_objs;
@@ -39,8 +43,8 @@ BVHNode* BVH::build_node_t(int start, int end) {
 
   // partition O(N)
   int mid = start;
-  for (int ind = start; ind < end; i++) {
-    if (build_objs[ind]->getCentroid()[split_dim] < split_coor) {
+  for (int ind = start; ind < end; ind++) {
+    if (build_objs[ind]->get_centroid()[split_dim] < split_coor) {
       Object* tmp = build_objs[ind];
       build_objs[ind] = build_objs[mid];
       build_objs[mid] = tmp;
@@ -56,40 +60,43 @@ BVHNode* BVH::build_node_t(int start, int end) {
   BVHNode* left_child = build_node(start, mid);
   BVHNode* right_child = build_node(mid, end);
   BVHNode* nodep = new BVHNode(-1, -1, bbox);
-  nodep.left = left_child;
-  nodep.right = right_child;
+  nodep->left = left_child;
+  nodep->right = right_child;
   return nodep;
 }
 
 struct _WorkingNode {
-  _WorkingNode(BVHNode* nodep_, double t_): nodep(nodep_), t(t_) {}
+  _WorkingNode() {}
+
+  _WorkingNode(BVHNode* nodep_, double t_): nodep(nodep_), bbox_t(t_) {}
 
   BVHNode* nodep;
 
   // For pruning bbox whose intersection distance is bounded by
   // current minimum object intersection distance
   double bbox_t;
-}
+};
 
-bool BVH::intersect(const Ray& ray, Object* &obj, double& t) const {
+bool BVH::intersect(const Ray& ray, Object* &obj, double& t) {
   // FIXME: here a magic number 64... constrain the max expanding number
   // Simulate a working stack for depth-first search
   obj = NULL;
-  _WorkingNode* working[64];
+  _WorkingNode working[64];
   int working_index = 0;
   working[0].nodep = root;
-  working[0].nearest = 1e10; // FIXME: magic number..
+  working[0].bbox_t = 1e10; // FIXME: magic number..
   t = 1e10;
 
   while (working_index >= 0) {
-    _WorkingNode* w_nodep = working[working_index];
+    _WorkingNode w_node = working[working_index];
     working_index--;
-    if (w_nodep->bbox_t > t) {
+    if (w_node.bbox_t > t) {
       // this node's intersect distance is larger than current finded true object intersection distance `t`
       continue;
     }
-    if (node.offset != -1) { // leaf node
-      for (int i = node.offset; i < node.offset + node.size; i++) {
+    BVHNode* nodep = w_node.nodep;
+    if (nodep->offset != -1) { // leaf node
+      for (int i = nodep->offset; i < nodep->offset + nodep->size; i++) {
         double dist;
         Object* cur_obj = build_objs[i];
         bool intersected = cur_obj->intersect(ray, dist);
@@ -99,11 +106,11 @@ bool BVH::intersect(const Ray& ray, Object* &obj, double& t) const {
         }
       }
     } else { // non-leaf node
-      BVHNode* left_nodep = w_nodep->nodep->left;
-      BVHNode* right_nodep = w_nodep->nodep->right;
+      BVHNode* left_nodep = nodep->left;
+      BVHNode* right_nodep = nodep->right;
       double left_dist, right_dist;
-      bool left_int = left_nodep->bbox->intersect(ray, left_dist);
-      bool right_int = right_nodep->bbox->intersect(ray, right_dist);
+      bool left_int = left_nodep->bbox.intersect(ray, left_dist);
+      bool right_int = right_nodep->bbox.intersect(ray, right_dist);
       if (left_int && right_int) {
         // A optimization: push closer-intersected bbox last.
         if (left_dist < right_dist) {
@@ -128,3 +135,12 @@ bool BVH::intersect(const Ray& ray, Object* &obj, double& t) const {
   }
   return obj != NULL;
 }
+
+BVH::~BVH() {
+    if (build_objs) {
+      delete[] build_objs;
+    }
+    for (auto nodepp : bvh_nodes) {
+      delete nodepp;
+    }
+  }

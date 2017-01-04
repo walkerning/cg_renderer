@@ -24,7 +24,7 @@ struct HashMap {
   void insert(K key, V value) {
     auto got = hash_map.find(key);
     if (got != hash_map.end()) {
-      hash_map[key] = hash_map[key].list_add(value);
+      hash_map[key] = hash_map[key]->list_add(value);
     }
     hash_map[key] = new HashNode<V>(value);
   }

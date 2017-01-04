@@ -4,6 +4,7 @@
 #include <functional>
 #include <cstdint>
 #include "renderers/hitpoint.h"
+#include "hash.h"
 #include "bbox.h"
 #include "renderer.h"
 #include "path.h"
@@ -16,7 +17,7 @@ struct PhotonMapper: Renderer {
   virtual void do_render();
 };
 
-struct AdaptivePhotonMapper: PhotonRenderer {
+struct AdaptivePhotonMapper: PhotonMapper {
   // Configurations
   int num_passes; // # of passes
   int num_photons; // # of photon per pass
@@ -53,20 +54,20 @@ struct AdaptivePhotonMapper: PhotonRenderer {
 
   virtual void do_render();
 
-  void splat_hit_points(Vec3 intersection, Vec3 normal, Vec3 flux) {
-
-  }
+  void splat_hit_points(Vec3 intersection, Vec3 normal, Vec3 flux);
 
   bool is_visible(Path& path);
 
-  static bool traceback_eye(Renderer* render, Ray& ray_in, Ray& ray_out,
-                            Path& path, Object* obj, Vec3 intersection, int detph);
+  void accumulate_radiance();
 
-  static bool traceback_light(Renderer* render, Ray& ray_in, Ray& ray_out,
-                              Path& path, Object* obj, Vec3 intersection, int detph);
+  static bool trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path,
+                        Object* obj, Vec3 intersection, BRDF* brdf, int detph);
+
+  static bool trace_light(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path,
+                          Object* obj, Vec3 intersection, BRDF* brdf, int detph);
 
   void build_hash_grid();
 };
 
-REGISTER_RENDERER(PhotonMapper, "photon_mapper");
-REGISTER_RENDERER(PhotonMapper, "ada_photon_mapper");
+REGISTER_RENDERER(PhotonMapper, photon_mapper);
+REGISTER_RENDERER(PhotonMapper, ada_photon_mapper);

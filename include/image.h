@@ -13,15 +13,6 @@ std::unordered_map<std::string, ImageType> image_type_map = {{"bmp", BMP}};
 
 void write_bmp(Vec3* im, int height, int width, std::string fname);
 
-void write_image(Vec3* im, int height, int width, double scale, std::string fname, std::string type) {
-  auto got = image_type_map.find(type);
-  if (got == image_type_map.end()) {
-    std::cerr << "Error: <image> Unknown image type " << type << std::endl;
-    return;
-  }
-  write_image(im, height, width, fname, got->second);
-}
-
 void write_image(Vec3* im, int height, int width, double scale, std::string fname, ImageType type) {
   // copy to im_write
   int len = height * width;
@@ -42,6 +33,15 @@ void write_image(Vec3* im, int height, int width, double scale, std::string fnam
   }
 
   delete[] im_write;
+}
+
+void write_image(Vec3* im, int height, int width, double scale, std::string fname, std::string type) {
+  auto got = image_type_map.find(type);
+  if (got == image_type_map.end()) {
+    std::cerr << "Error: <image> Unknown image type " << type << std::endl;
+    return;
+  }
+  write_image(im, height, width, scale, fname, got->second);
 }
 
 // code copied from cobra.cpp

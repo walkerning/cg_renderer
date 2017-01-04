@@ -37,6 +37,7 @@ struct Object {
   // Return type information
   virtual inline const char* type() const = 0;
 
+  virtual ~Object() {}
 };
 
 struct Triangle: Object {
@@ -53,17 +54,17 @@ struct Triangle: Object {
     normal = normal.normalize();
   }
 
-  bool on_plane(Vec3 v) {
+  bool on_plane(Vec3 pos) {
     double eps = 1e-5;
-    return abs(normal.dot(v[0] - v)) < eps &&  abs(normal.dot(v[1] - v)) < eps;
+    return std::abs(normal.dot(v[0] - pos)) < eps &&  std::abs(normal.dot(v[1] - pos)) < eps;
   }
 
-  bool include(Vec3 v) {
+  bool include(Vec3 pos) {
     double eps = 1e-5;
     // check three sub triangle's direction
-    double sub_area1 = ((v[0] - v) % (v[1] - v)).dot(normal);
-    double sub_area2 = ((v[1] - v) % (v[2] - v)).dot(normal);
-    double sub_area3 = ((v[2] - v) % (v[0] - v)).dot(normal);
+    double sub_area1 = ((v[0] - pos) % (v[1] - pos)).dot(normal);
+    double sub_area2 = ((v[1] - pos) % (v[2] - pos)).dot(normal);
+    double sub_area3 = ((v[2] - pos) % (v[0] - pos)).dot(normal);
     if (sub_area1 >= -eps && sub_area2 >= -eps && sub_area3 >= -eps) {
       return true;
     }
@@ -73,8 +74,8 @@ struct Triangle: Object {
   virtual bool intersect(const Ray& ray, double& t) {
     // intersection with the plane
     t = normal.dot(v[0] - ray.ori) / normal.dot(ray.dir);
-    Vec3 v = ray.ori + ray.dir * t;
-    return include(v);
+    Vec3 v_i = ray.ori + ray.dir * t;
+    return include(v_i);
   }
 
   virtual BBox get_bbox() {
@@ -120,7 +121,7 @@ struct Sphere: Object {
   Vec3 position;
   double radius;
 
-  Sphere(Vec3 origin_, double radius_, BRDF *brdf_): Object(brdf_), origin(origin_), radius(radius_) {}
+  Sphere(Vec3 position_, double radius_, BRDF *brdf_): Object(brdf_), position(position_), radius(radius_) {}
 
   virtual bool intersect(const Ray& ray, double& t) {
     // Solve `t^2 - 2*t*(position - ori)^T dir + ||position - ori||^2 - R^2 = 0`
@@ -141,7 +142,9 @@ struct Sphere: Object {
   }
 
   virtual BBox get_bbox() {
-    return BBox(position - radius, position + radius);
+    BBox bbox(position - radius);
+    bbox.max = position + radius;
+    return bbox;
   }
 
   virtual Vec3 get_normal(Vec3 pos) {
@@ -218,10 +221,10 @@ struct MeshObject: Object {
       triangles.push_back(new NormalizedTriangle(posBuffer[index.pos[0]] + position,
                                                  posBuffer[index.pos[1]] + position,
                                                  posBuffer[index.pos[2]] + position,
-                                                 brdf,
                                                  normalBuffer[index.normal[0]],
                                                  normalBuffer[index.normal[1]],
-                                                 normalBuffer[index.normal[2]],));
+                                                 normalBuffer[index.normal[2]],
+                                                 brdf));
     }
   }
 

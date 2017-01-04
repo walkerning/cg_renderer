@@ -7,13 +7,18 @@ endif
 
 INCLUDE_DIRS = include
 SRC_DIR = src
+BUILD_DIR = build
 CXX_FLAGS = --std=c++11
 
-all: build/main
+SRCS := $(shell find $(SRC_DIR) -name "*.cpp")
 
-build/%: $(SRC_DIR)/%.cpp
+all: $(BUILD_DIR)/main
+
+$(BUILD_DIR):
 	@mkdir -p build
+
+build/main: $(SRCS) | $(BUILD_DIR)
 	$(CXX) $(CXX_FLAGS) $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir)) -o $@ $^
 
 clean:
-	@rm -rf build
+	@rm -rf $(BUILD_DIR)

@@ -6,10 +6,10 @@ PhotonMapper::PhotonMapper(const RendererConf& conf): Renderer(conf) {}
 void PhotonMapper::do_render() {}
 
 // Adaptive photon mapper
-AdaptivePhotonMapper::AdaptivePhotonMapper(const RendererConf& conf): Renderer(conf),
-                                                                      uniform_count(0),
+AdaptivePhotonMapper::AdaptivePhotonMapper(const RendererConf& conf): PhotonMapper(conf),
+                                                                      uniform_count(1),
                                                                       mutated_count(0),
-                                                                      accepted_count(0) {
+                                                                      accepted_count(1) {
   num_passes = std::stoi(find_with_default(conf, "num_passes", "1000"));
   num_photons = std::stoi(find_with_default(conf, "num_photons", "10000"));
   initial_mutation_size = std::stod(find_with_default(conf, "initial_mutation_size", "1.0"));
@@ -18,37 +18,38 @@ AdaptivePhotonMapper::AdaptivePhotonMapper(const RendererConf& conf): Renderer(c
   snapshot_prefix = std::stoi(find_with_default(conf, "snapshot_prefix", "snapshot_"));
   snapshot_type = find_with_default(conf, "snapshot_type", "bmp");
   //initial_radius = std::stod(find_with_default(conf, "initial_radius", "0.25"));
-  photon_grow_rate = std::stod(find_with_default(conf, "photon_grow_rate", "0.7"))
+  photon_grow_rate = std::stod(find_with_default(conf, "photon_grow_rate", "0.7"));
 }
 
-bool AdaptivePhotonMapper::trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path, Object* obj, Vec3 intersection, BRDF* brdf, int detph) {
+bool AdaptivePhotonMapper::trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path,
+                                     Object* obj, Vec3 intersection, BRDF* brdf, int detph) {
   if (brdf->is_specular()) {
     return true;
   } else {
     // FIXME: shared status used, hard to parallelize now.
-    // render->hit_points[render->iy * image_width + render->ix] = Hit
-    dynamic_cast<AdaptivePhotonMapper>(render)->hit_points.push_back(new HitPoint(.position=intersection,
-                                              .normal=obj->get_normal(intersection),
-                                              .weight=ray_in.flux,
-                                              .pixel_x=ix,
-                                              .pixel_y=iy,
-                                              //.radius_sqr=intial_radius*initial_radius,
-                                              .N=0,
-                                              .flux=Vec3()));
-    return ralse;
+    // render->hit_points[render->iy * im_width + render->ix] = Hit
+    AdaptivePhotonMapper* t_render = dynamic_cast<AdaptivePhotonMapper*>(render);
+    t_render->hit_points.push_back(new HitPoint(intersection,
+                                                obj->get_normal(intersection),
+                                                ray_in.flux,
+                                                t_render->ix, t_render->iy));
+
+    return false;
   }
 }
 
-bool AdaptivePhotonMapper::trace_light(Renderer* render, Ray& ray, Ray& ray_out, Path& path, Object* obj, Vec3 intersection, BRDF* brdf, int depth) {
+bool AdaptivePhotonMapper::trace_light(Renderer* render, Ray& ray, Ray& ray_out, Path& path,
+                                       Object* obj, Vec3 intersection, BRDF* brdf, int depth) {
   if (brdf->is_specular()) {
     return true;
   } else {
-    splat_hit_points(intersection, normal, ray.flux);
+    Vec3 normal = obj->get_normal(intersection);
+    dynamic_cast<AdaptivePhotonMapper*>(render)->splat_hit_points(intersection, normal, ray.flux);
 
     // Russian Roulette
-    if (depth >= rr_detph) {
+    if (depth >= render->rr_depth) {
       double p = ray_out.flux.max();
-      if (path.next() > p) {
+      if (path.next_value() > p) {
         return false;
       }
       ray_out.flux = ray_out.flux * (1./p);
@@ -58,22 +59,22 @@ bool AdaptivePhotonMapper::trace_light(Renderer* render, Ray& ray, Ray& ray_out,
 
 void AdaptivePhotonMapper::do_render() {
   Vec3 cx(im_size_ratio);
-  Vec3 cy = (cx % env->camera.dir).normalize() * im_size_ratio;
+  Vec3 cy = (cx % env->camera->dir).normalize() * im_size_ratio;
   for (int pass = 0; pass < num_passes; pass++) {
     fprintf(stderr, "Pass #%d:\n", pass);
 
     // eye tracing pass: shoot ray from camera
-    for (iy = 0; iy < image_height; iy++) {
+    for (iy = 0; iy < im_height; iy++) {
       fprintf(stderr, "\r[eye tracing] Pass #%d: %d / %d rows", pass,
-              iy + 1, image_height);
-      for (ix = 0; ix < image_width; ix++) {
+              iy + 1, im_height);
+      for (ix = 0; ix < im_width; ix++) {
         double r1 = 2 * uniform_rand();
         // Tent filter: Triangle distribution in [-1, 1)
         double dx = (r1 < 1)? sqrt(r1) - 1: 1 - sqrt(2 - r1);
         double r2 = 2 * uniform_rand();
         double dy = (r2 < 1)? sqrt(r2) - 1: 1 - sqrt(2 - r2);
-        Vec3 camera_d = env->camera.dir * im_dist + cx * (ix + dx/2) + cy * (iy + dy/2);
-        Ray ray(env->camera.ori, (camera_d - env->camera.ori).normalize());
+        Vec3 camera_d = env->camera->dir * im_dist + cx * (ix + dx/2) + cy * (iy + dy/2);
+        Ray ray(env->camera->ori, (camera_d - env->camera->ori).normalize());
         Path p; // a stub
         trace(ray, p, AdaptivePhotonMapper::trace_eye, max_depth);
       }
@@ -92,7 +93,7 @@ void AdaptivePhotonMapper::do_render() {
       Path uni_path = Path();
       if (is_visible(uni_path)) {
         cur_path = uni_path;
-        uni_count += 1;
+        uniform_count += 1;
       } else {
         Path mutate_path = cur_path.mutate(mutation_size);
         mutated_count += 1;
@@ -100,7 +101,7 @@ void AdaptivePhotonMapper::do_render() {
           cur_path = mutate_path;
           accepted_count += 1;
         } else {
-          is_visible(cur_path)
+          is_visible(cur_path);
         }
         mutation_size = mutation_size + (accepted_count / mutated_count - target_acceptance) / mutated_count;
       }
@@ -124,42 +125,41 @@ void AdaptivePhotonMapper::accumulate_radiance() {
   // accumulate radiance to image
   int len = im_height * im_width;
   for (int i = 0; i < len; i++) {
-    im[i] = hit_points[i].flux / M_PI / hit_points[i].radius_sqr;
+    im[i] = hit_points[i]->flux / M_PI / hit_points[i]->radius_sqr;
   }
 }
 
 bool AdaptivePhotonMapper::is_visible(Path& path) {
   visible = false;
   path.reset();
-  trace(env->light->sample_ray(path), path, trace_light, max_depth);
+  Ray ray = env->light->sample_ray(path);
+  trace(ray, path, trace_light, max_depth);
   return visible;
 }
 
 void AdaptivePhotonMapper::build_hash_grid() {
   bbox = BBox();
   // calculate initial_radius
-  for (auto it : hit_points) {
-    bbox.fit((*it)->position);
+  for (auto hp : hit_points) {
+    bbox.fit(hp->position);
   }
   initial_radius = (bbox.max - bbox.min).dot(Vec3(1, 1, 1)) / (3. * (im_width + im_height) / 2.) * 2.;
-  for (auto it : hit_points) {
-    HitPoint* hp = (*it);
+  for (auto hp : hit_points) {
     hp->radius_sqr = initial_radius*initial_radius;
     bbox.fit(hp->position - initial_radius);
     bbox.fit(hp->position + initial_radius);
   }
   hash_scale = 1. / (initial_radius * 2.);
-  for (auto it : hit_points) {
+  for (auto hp : hit_points) {
     // Q: this strategy is copy from smallppm_exp.cpp.
     // but why this loop is needed? for handling the edge cases?
-    HitPoint* hp = (*it);
     Vec3 bmin = (hp->position - initial_radius - bbox.min) * hash_scale;
     Vec3 bmax = (hp->position + initial_radius - bbox.min) * hash_scale;
-    for (int z = abs(uint16_t(bmin.z)); z <= abs(uint16_t(bmax.z)); z++) {
-      for (int y = abs(uint16_t(bmin.y)); y <= abs(uint16_t(bmax.y)); y++) {
-        for (int x = abs(uint16_t(bmin.x)); x <= abs(uint16_t(bmax.x)); x++) {
+    for (int z = uint16_t(bmin.z); z <= uint16_t(bmax.z); z++) {
+      for (int y = uint16_t(bmin.y); y <= uint16_t(bmax.y); y++) {
+        for (int x = uint16_t(bmin.x); x <= uint16_t(bmax.x); x++) {
           uint64_t key = hash_3int16(x, y, z);
-          hash_grid.insert(key, (*it));
+          hash_grid.insert(key, hp);
         }
       }
     }

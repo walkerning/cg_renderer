@@ -2,11 +2,11 @@
 #include "vec3.h"
 #include "path.h"
 
-class Light {
-  virtual Ray sample_ray() = 0;
+struct Light {
+  virtual Ray sample_ray(Path& path) = 0;
 };
 
-class RadPointLight {
+struct RadPointLight: Light {
   Vec3 position;
   double radius;
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include "bvh.h"
 #include "vec3.h"
 #include "light.h"
 #include "object.h"
@@ -30,8 +31,8 @@ struct Environment {
   void add_object(Object* obj) {
     // need a virtual object_type? for BVH adding?
     if (strcmp(obj->type(), "Mesh") == 0) {
-      for (auto& tri : obj->triangles) {
-        add_object(&tri);
+      for (auto tri : dynamic_cast<MeshObject*>(obj)->triangles) {
+        add_object(tri);
       }
     } else {
       objects.push_back(obj);
@@ -43,7 +44,7 @@ struct Environment {
       delete bvh;
     }
     bvh = new BVH(objects);
-    bvh.build();
+    bvh->build();
   }
 
   // Construct a typical test environment.
@@ -53,7 +54,7 @@ struct Environment {
   void init_env_from_file(std::string);
 
   // Renderer can use these functions.
-  inline bool intersect(const Ray& ray, Object* &obj, double& t) const {
+  inline bool intersect(const Ray& ray, Object* &obj, double& t) {
     if (!bvh) {
       // std::cerr << "Error: in `Environment::intersect`: BVH not build yet!" << std::endl;
       std::cerr << "Info: <Environment::intersect>: building BVH ..." << std::endl;

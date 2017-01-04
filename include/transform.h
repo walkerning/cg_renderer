@@ -10,7 +10,7 @@ void image_scale(Vec3* im, int height, int width, Vec3 scale) {
 }
 
 double _gamma(double in) {
-  return pow(MAX(MIN(x, 1.), 0.), 1./2.2);
+  return pow(MAX(MIN(in, 1.), 0.), 1./2.2);
 }
 
 void image_gamma(Vec3* im, int height, int width) {

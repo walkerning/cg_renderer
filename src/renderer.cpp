@@ -1,4 +1,4 @@
-#include "render.h"
+#include "renderer.h"
 
 Renderer* Renderer::get_renderer(const RendererConf& conf) {
   std::string type;
@@ -21,7 +21,7 @@ void Renderer::trace(Ray& ray, Path& path, TraceCallback cb, int max_depth) {
       break;
     }
     Vec3 intersection = ray.ori + ray.dir * t;
-    Vec3 normal = obj.get_normal(intersection);
+    Vec3 normal = obj->get_normal(intersection);
 
     BRDF* brdf = obj->brdf->get(path);
     brdf->apply_absorption(ray, ray.ori, intersection, normal);

@@ -5,9 +5,12 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include "renderer.h"
 #include "env.h"
 
-typedef bool (*cb)(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path, Object* obj, Vec3 intersection, BRDF* brdf, int depth) TraceCallback;
+struct Renderer;
+
+typedef bool (*TraceCallback)(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path, Object* obj, Vec3 intersection, BRDF* brdf, int depth);
 typedef std::unordered_map<std::string, std::string> RendererConf;
 
 std::string find_with_default(const RendererConf& conf, std::string key, std::string def) {
@@ -40,7 +43,7 @@ struct Renderer {
     im = new Vec3[im_height * im_width];
   }
 
-  inline static void set_env(Environment* env_) {
+  inline void set_env(Environment* env_) {
     env = env_;
   }
 
@@ -90,7 +93,8 @@ struct Renderer {
 };
 
 // registry for renderers
-std::unordered_map<std::string, Renderer* (*creator)(const RendererConf& conf)> RenderRegistry;
+typedef Renderer* (*RendererCreator)(const RendererConf&);
+std::unordered_map<std::string, RendererCreator> RenderRegistry;
 
 struct _Register {
   _Register(const std::string& type,
