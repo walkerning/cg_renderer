@@ -11,6 +11,8 @@ struct Path {
 
   Path(): next_index(0) {}
 
+  Path(const Path& other): rand_values(other.rand_values) {}
+
   // lazy path evaluation
   double next_value() {
     int sz = static_cast<int>(rand_values.size());
@@ -23,8 +25,20 @@ struct Path {
   }
 
   // apply mutation
-  double mutate(double mutation_size) {
-
+  Path mutate(double mutation_size) {
+    Path new_path = path;
+    for (auto &value : new_path.values) {
+      double e1 = uniform_rand();
+      double e2 = uniform_rand();
+      value += pow(e2, 1. / mutation_size + 1) * ((e1 > 0.5)? 1: -1);
+      // wrapping around
+      if (value > 1) {
+        value -= 1;
+      } else if (value < 0) {
+        value += 1;
+      }
+    }
+    return
   }
 };
 
