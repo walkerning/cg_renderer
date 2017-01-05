@@ -23,32 +23,32 @@ public:
     return *(instance_p);
   }
 
-  void reset_random_seed(const unsigned int seed) {
+  inline void reset_random_seed(const unsigned int seed) {
     delete mt_p;
     mt_p = new std::mt19937(seed);
   }
 
-  static void set_random_seed(const unsigned int seed) {
+  inline static void set_random_seed(const unsigned int seed) {
     // set RNG seed. for debug use
     get().reset_random_seed(seed);
   }
 
   // random sample methods
-  double uniform_rand() {
+  inline double uniform_rand() {
     return (*uniform_dist)(*mt_p);
   }
 
-  double normal_rand() {
+  inline double normal_rand() {
     return (*normal_dist)(*mt_p);
   }
 };
 
-double uniform_rand() {
+inline double uniform_rand() {
   return RNG::get().uniform_rand();
 }
 
-double normal_rand() {
+inline double normal_rand() {
   return RNG::get().normal_rand();
 }
 
-RNG* RNG::instance_p = NULL;
+

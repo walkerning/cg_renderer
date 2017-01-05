@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
-#include "transform.h"
+#include "utils/transform.h"
 
 enum ImageType {
   BMP = 1

@@ -20,32 +20,14 @@ struct Environment {
   // *****************
   // **** Methods ****
   // *****************
-  Environment(): light(NULL), camera(NULL), bvh(NULL) {};
+  Environment();
 
   // handle rectangles specially
-  void add_wall(Vec3 a, Vec3 b, Vec3 c, Vec3 d, BRDF* brdf) {
-    add_object(new Triangle(a, b, c, brdf));
-    add_object(new Triangle(a, c, d, brdf));
-  }
+  void add_wall(Vec3 a, Vec3 b, Vec3 c, Vec3 d, BRDF* brdf);
 
-  void add_object(Object* obj) {
-    // need a virtual object_type? for BVH adding?
-    if (strcmp(obj->type(), "Mesh") == 0) {
-      for (auto tri : dynamic_cast<MeshObject*>(obj)->triangles) {
-        add_object(tri);
-      }
-    } else {
-      objects.push_back(obj);
-    }
-  }
+  void add_object(Object* obj);
 
-  void build_bvh() {
-    if (bvh) {
-      delete bvh;
-    }
-    bvh = new BVH(objects);
-    bvh->build();
-  }
+  void build_bvh();
 
   // Construct a typical test environment.
   void init_test_env();
@@ -64,10 +46,5 @@ struct Environment {
     return bvh->intersect(ray, obj, t);
   }
 
-  ~Environment() {
-    // TODO: delete all malloced memory
-    for (auto op : objects) {
-      delete op;
-    }
-  }
+  ~Environment();
 };

@@ -3,13 +3,13 @@
 #include <iostream>
 #include <functional>
 #include <cstdint>
-#include "renderers/hitpoint.h"
-#include "hash.h"
 #include "bbox.h"
 #include "renderer.h"
 #include "path.h"
-#include "rand.h"
-#include "image.h"
+#include "utils/hash.h"
+#include "utils/rand.h"
+#include "utils/image.h"
+#include "renderers/hitpoint.h"
 
 // Traditional photon mapper method for comparison use.
 struct PhotonMapper: Renderer {

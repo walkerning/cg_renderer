@@ -1,5 +1,7 @@
 #include "renderer.h"
 
+std::unordered_map<std::string, RendererCreator> RenderRegistry;
+
 Renderer* Renderer::get_renderer(const RendererConf& conf) {
   std::string type;
   auto got = conf.find("type");
@@ -30,5 +32,24 @@ void Renderer::trace(Ray& ray, Path& path, TraceCallback cb, int max_depth) {
       break;
     }
     ray = ray_out;
+  }
+}
+
+_Register::_Register(const std::string& type,
+                     Renderer* (*creator)(const RendererConf& conf)) {
+  auto got = RenderRegistry.find(type);
+  if (got != RenderRegistry.end()) {
+    std::cerr << "Render type `" << type << "` is registered more than once! Ignore multiple registration." << std::endl;
+    return;
+  }
+  RenderRegistry[type] = creator;
+}
+
+std::string find_with_default(const RendererConf& conf, std::string key, std::string def) {
+  auto got = conf.find(key);
+  if (got == conf.end()) {
+    return def;
+  } else {
+    return got->second;
   }
 }

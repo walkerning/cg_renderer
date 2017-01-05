@@ -33,11 +33,11 @@ struct Vec3 {
   double operator[](int index) const { return *(&x + index); }
 };
 
-Vec3 min_(Vec3 a, Vec3 b) {
+inline Vec3 min_(Vec3 a, Vec3 b) {
   return Vec3(MIN(a.x, b.x), MIN(a.y, b.y), MIN(a.z, b.z));
 }
 
-Vec3 max_(Vec3 a, Vec3 b) {
+inline Vec3 max_(Vec3 a, Vec3 b) {
   return Vec3(MAX(a.x, b.x), MAX(a.y, b.y), MAX(a.z, b.z));
 }
 
@@ -50,9 +50,10 @@ struct Ray {
 
 typedef Ray Camera;
 
-double cathetus(double r, double x) {
+inline double cathetus(double r, double x) {
   if (r <= x) {
     return 0;
   }
   return sqrt(r * r - x * x);
 }
+

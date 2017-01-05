@@ -55,6 +55,7 @@ bool AdaptivePhotonMapper::trace_light(Renderer* render, Ray& ray, Ray& ray_out,
       ray_out.flux = ray_out.flux * (1./p);
     }
   }
+  return true;
 }
 
 void AdaptivePhotonMapper::do_render() {

@@ -13,14 +13,7 @@ struct Renderer;
 typedef bool (*TraceCallback)(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path, Object* obj, Vec3 intersection, BRDF* brdf, int depth);
 typedef std::unordered_map<std::string, std::string> RendererConf;
 
-std::string find_with_default(const RendererConf& conf, std::string key, std::string def) {
-  auto got = conf.find(key);
-  if (got == conf.end()) {
-    return def;
-  } else {
-    return got->second;
-  }
-}
+std::string find_with_default(const RendererConf& conf, std::string key, std::string def);
 
 struct Renderer {
   Vec3* im;
@@ -94,18 +87,10 @@ struct Renderer {
 
 // registry for renderers
 typedef Renderer* (*RendererCreator)(const RendererConf&);
-std::unordered_map<std::string, RendererCreator> RenderRegistry;
 
 struct _Register {
   _Register(const std::string& type,
-            Renderer* (*creator)(const RendererConf& conf)) {
-    auto got = RenderRegistry.find(type);
-    if (got != RenderRegistry.end()) {
-      std::cerr << "Render type `" << type << "` is registered more than once! Ignore multiple registration." << std::endl;
-      return;
-    }
-    RenderRegistry[type] = creator;
-  }
+            Renderer* (*creator)(const RendererConf& conf));
 };
 
 #define REGISTER_RENDERER(struct_name, type) \

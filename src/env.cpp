@@ -1,5 +1,31 @@
 #include "env.h"
 
+Environment::Environment(): light(NULL), camera(NULL), bvh(NULL) {}
+
+void Environment::add_wall(Vec3 a, Vec3 b, Vec3 c, Vec3 d, BRDF* brdf) {
+    add_object(new Triangle(a, b, c, brdf));
+    add_object(new Triangle(a, c, d, brdf));
+  }
+
+void Environment::add_object(Object* obj) {
+    // need a virtual object_type? for BVH adding?
+    if (strcmp(obj->type(), "Mesh") == 0) {
+      for (auto tri : dynamic_cast<MeshObject*>(obj)->triangles) {
+        add_object(tri);
+      }
+    } else {
+      objects.push_back(obj);
+    }
+  }
+
+void Environment::build_bvh() {
+    if (bvh) {
+      delete bvh;
+    }
+    bvh = new BVH(objects);
+    bvh->build();
+  }
+
 void Environment::init_test_env() {
   light = new RadPointLight(Vec3(40, 20, 20));
   camera = new Camera(Vec3(20, 20, 0), Vec3(0, 0, 1));
@@ -26,3 +52,10 @@ void Environment::init_test_env() {
 void Environment::init_env_from_file(std::string) {
 
 }
+
+Environment::~Environment() {
+    // TODO: delete all malloced memory
+    for (auto op : objects) {
+      delete op;
+    }
+  }
