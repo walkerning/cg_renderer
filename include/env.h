@@ -39,7 +39,6 @@ struct Environment {
   inline bool intersect(const Ray& ray, Object* &obj, double& t) {
     if (!bvh) {
       // std::cerr << "Error: in `Environment::intersect`: BVH not build yet!" << std::endl;
-      std::cerr << "Info: <Environment::intersect>: building BVH ..." << std::endl;
       build_bvh();
       // return false;
     }

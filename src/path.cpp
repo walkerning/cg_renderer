@@ -10,7 +10,7 @@ Vec3 path_to_dir(Path& path) {
 double Path::next_value() {
   int sz = static_cast<int>(rand_values.size());
   if (sz <= next_index) {
-    for (int i = 0; i < next_index - sz; i++) {
+    for (int i = 0; i <= next_index - sz; i++) {
       rand_values.push_back(uniform_rand());
     }
   }

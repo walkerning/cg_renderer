@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdio>
 #include <cmath>
 
 #define MIN(x, y) (x) >= (y)? (y) : (x)
@@ -31,6 +32,9 @@ struct Vec3 {
   Vec3& normalize() { return *this = *this * (1 / norm()); }
 
   double operator[](int index) const { return *(&x + index); }
+
+  // for debug
+  void print() const { printf("Vec3(%lf, %lf, %lf)", x, y, z); }
 };
 
 inline Vec3 min_(Vec3 a, Vec3 b) {

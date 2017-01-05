@@ -25,6 +25,7 @@ int main(int argc, const char** argv) {
   } else {
     env.init_test_env();
   }
+  env.build_bvh();
 
   Renderer* renderer = Renderer::get_renderer(string(argv[1]));
   renderer->set_env(&env);

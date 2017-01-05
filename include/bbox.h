@@ -14,4 +14,5 @@ struct BBox {
   void fit(Vec3 point);
   void merge(const BBox& bbox);
   int max_dim();
+  void print();
 };

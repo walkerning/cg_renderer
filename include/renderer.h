@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include "renderer.h"
 #include "env.h"
+#include <cstdio> // for dbg
 
 struct Renderer;
 
@@ -29,10 +30,11 @@ struct Renderer {
   Renderer(const RendererConf& conf) {
     im_height = std::stoi(find_with_default(conf, "im_height", "512"));
     im_width = std::stoi(find_with_default(conf, "im_width", "384"));
-    im_dist = std::stoi(find_with_default(conf, "im_dist", "100"));
-    im_size_ratio = std::stoi(find_with_default(conf, "im_size_ratio", "0.5"));
-    rr_depth = std::stoi(find_with_default(conf, "rr_depth", "10"));
-    max_depth = std::stoi(find_with_default(conf, "max_depth", "100"));
+    im_dist = std::stoi(find_with_default(conf, "im_dist", "2"));
+    // the image width
+    im_size_ratio = std::stod(find_with_default(conf, "im_size_ratio", "0.015625"));
+    rr_depth = std::stoi(find_with_default(conf, "rr_depth", "5"));
+    max_depth = std::stoi(find_with_default(conf, "max_depth", "15"));
     im = new Vec3[im_height * im_width];
   }
 
@@ -57,12 +59,17 @@ struct Renderer {
       if (name[0] == '#') { // comment
         continue;
       }
-      if (!(iss >> eq >> value >> std::ws) || eq.compare(std::string("=")) != 0 || iss.get() != EOF) {
+      iss >> eq >> value >> std::ws;
+      if (eq.compare(std::string("=")) != 0 || iss.get() != EOF) {
         std::cerr << "Wrong config line: " << str << std::endl;
         continue;
       }
       conf[name] = value;
     }
+    // print configuration
+    std::cerr << "Renderer configuration:" << std::endl;
+    for (auto it = conf.begin(); it != conf.end(); ++it )
+      std::cerr << it->first << ": " << it->second << std::endl;
     return conf;
   }
 

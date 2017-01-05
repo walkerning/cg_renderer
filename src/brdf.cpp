@@ -9,7 +9,7 @@ Ray Reflection::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersectio
   Vec3 dir_in = ray_in.dir;
   // reflect direction
   Vec3 dir_out = (dir_in - (2 * dir_in.dot(normal))).normalize();
-  Ray ray_out(intersection, dir_out);
+  Ray ray_out(intersection, dir_out, ray_in.flux * decay);
   ray_out.flux = ray_in.flux * decay;
   return ray_out;
 }
@@ -43,7 +43,7 @@ Ray Refraction::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersectio
 
   if (sin_out > 1) { // full reflection
     // FIXME: 从里向外全反射时, 应该有衰减还是没有?
-    return Ray(intersection, reflect_out, Vec3(1, 1, 1));
+    return Ray(intersection, reflect_out, ray_in.flux * Vec3(1, 1, 1));
   } else {
     // Decide refract or reflect.
     double select = path.next_value();
@@ -58,11 +58,11 @@ Ray Refraction::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersectio
     // equal mix of s and p polarisations
     double prob_reflect = (R_s * R_s + R_p * R_p) / 2;
     if (select < prob_reflect) {
-      return Ray(intersection, reflect_out, reflect_decay);
+      return Ray(intersection, reflect_out, ray_in.flux * reflect_decay);
     }
     // Cal: normal direction: -N*cos_out; tangent direction: (dir_in + normal * cos_in) / index_ratio
     Vec3 refract_out = (dir_in / index_ratio + normal * (cos_in / index_ratio - cos_out)).normalize();
-    return Ray(intersection, refract_out, refract_decay);
+    return Ray(intersection, refract_out, ray_in.flux * refract_decay);
   }
 }
 // Diffuse
@@ -75,7 +75,7 @@ Ray Diffuse::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersection) 
     // 这个处理全部都对吗?
     dir_out = dir_out * (-1);
   }
-  return Ray(intersection, dir_out, decay / M_PI);
+  return Ray(intersection, dir_out, ray_in.flux * (decay / M_PI));
 }
 
 // Mixed

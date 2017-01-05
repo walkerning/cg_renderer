@@ -7,6 +7,8 @@ struct BVHNode {
 
   int offset; // offset = -1 for non leaf nodes.
   int size; // leaf size. now, all `size` == 1
+  int split_dim; // split coordinate dimension
+  double split_coord;
   BBox bbox;
   BVHNode* left;
   BVHNode* right;
@@ -31,6 +33,8 @@ struct BVH {
   // Return intersect or not; the intersection object is in `obj`,
   // travel distance of ray is in `t`
   bool intersect(const Ray& ray, Object* &obj, double& t);
+
+  void print_bvh_tree();
 
   ~BVH();
 };

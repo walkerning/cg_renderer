@@ -9,8 +9,8 @@ void BVH::build() {
     delete[] build_objs;
     build_objs = NULL;
   }
-  build_objs = new Object*[objects.size()];
   int num_objs = objects.size();
+  build_objs = new Object*[num_objs];
   for (int i = 0; i < num_objs; i++) {
     build_objs[i] = objects[i];
   }
@@ -19,7 +19,7 @@ void BVH::build() {
 
 // A small decorator wrapper for recording BVHNode* in a flat vector. for destruct use.
 BVHNode* BVH::build_node(int start, int end) {
-  BVHNode* nodep = build_node(start, end);
+  BVHNode* nodep = build_node_t(start, end);
   if (nodep != NULL) {
     bvh_nodes.push_back(nodep);
   }
@@ -36,22 +36,29 @@ BVHNode* BVH::build_node_t(int start, int end) {
   }
   if (end - start <= leaf_size) { // leaf
     BVHNode* nodep = new BVHNode(start, end - start, bbox);
+    return nodep;
   }
+  BVHNode* nodep = new BVHNode(-1, end - start, bbox);
+
   // find good split dimension
   int split_dim = bbox.max_dim();
-  double split_coor = (bbox.min[split_dim] + bbox.max[split_dim]) / 2.;
+  nodep->split_dim = split_dim;
+  double split_coord = (bbox.min[split_dim] + bbox.max[split_dim]) / 2.;
+  nodep->split_coord = split_coord;
 
   // partition O(N)
   int mid = start;
   for (int ind = start; ind < end; ind++) {
-    if (build_objs[ind]->get_centroid()[split_dim] < split_coor) {
+    if (build_objs[ind]->get_centroid()[split_dim] < split_coord) {
       Object* tmp = build_objs[ind];
       build_objs[ind] = build_objs[mid];
       build_objs[mid] = tmp;
       mid++;
     }
   }
-  // very bad situation, make a equal-size split
+
+  // very bad situation, make a equal-size split.
+  // also avoid dead loop
   if (mid == start || mid == end) {
     mid = start + (end - start) / 2;
   }
@@ -59,7 +66,6 @@ BVHNode* BVH::build_node_t(int start, int end) {
   // and conquer
   BVHNode* left_child = build_node(start, mid);
   BVHNode* right_child = build_node(mid, end);
-  BVHNode* nodep = new BVHNode(-1, -1, bbox);
   nodep->left = left_child;
   nodep->right = right_child;
   return nodep;
@@ -137,10 +143,14 @@ bool BVH::intersect(const Ray& ray, Object* &obj, double& t) {
 }
 
 BVH::~BVH() {
-    if (build_objs) {
-      delete[] build_objs;
-    }
-    for (auto nodepp : bvh_nodes) {
-      delete nodepp;
-    }
+  if (build_objs) {
+    delete[] build_objs;
   }
+  for (auto nodepp : bvh_nodes) {
+    delete nodepp;
+  }
+  bvh_nodes.clear();
+}
+
+
+void BVH::print_bvh_tree() {}

@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "cstdio"
 
 std::unordered_map<std::string, RendererCreator> RenderRegistry;
 
@@ -6,7 +7,7 @@ Renderer* Renderer::get_renderer(const RendererConf& conf) {
   std::string type;
   auto got = conf.find("type");
   if (got == conf.end()) {
-    type = "adaptive_photon_mapper"; // default type
+    type = "ada_photon_mapper"; // default type
   } else {
     type = got->second;
   }
@@ -22,6 +23,7 @@ void Renderer::trace(Ray& ray, Path& path, TraceCallback cb, int max_depth) {
     if (!intersected) {
       break;
     }
+    // printf("intersect!\n");
     Vec3 intersection = ray.ori + ray.dir * t;
     Vec3 normal = obj->get_normal(intersection);
 
@@ -42,6 +44,7 @@ _Register::_Register(const std::string& type,
     std::cerr << "Render type `" << type << "` is registered more than once! Ignore multiple registration." << std::endl;
     return;
   }
+  std::cerr << "INFO: <RenderRegistry> register render type `" << type << "`\n";
   RenderRegistry[type] = creator;
 }
 

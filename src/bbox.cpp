@@ -1,11 +1,12 @@
 #include "bbox.h"
+#include <cstdio>
 
 BBox::BBox(): initialized(false) {}
 
 BBox::BBox(Vec3 initial_p): min(initial_p), max(initial_p), initialized(true) {}
 
 bool BBox::intersect(const Ray& ray, double& t) {
-  if (initialized) {
+  if (!initialized) {
     return false;
   }
   for (int i = 0; i < 3; i++){ //we test slabs in every direction
@@ -68,4 +69,10 @@ int BBox::max_dim() {
     return 2;
   }
   return 0;
+}
+
+// for debug
+void BBox::print() {
+  printf("BBox[(%lf, %lf, %lf); (%lf, %lf, %lf)]\n", min[0], min[1], min[2],
+         max[0], max[1], max[2]);
 }

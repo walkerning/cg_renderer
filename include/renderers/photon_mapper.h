@@ -58,6 +58,7 @@ struct AdaptivePhotonMapper: PhotonMapper {
 
   bool is_visible(Path& path);
 
+  // progressively accumulate the radiance, reduce the flux and radius of hit points
   void accumulate_radiance();
 
   static bool trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path,
@@ -70,4 +71,4 @@ struct AdaptivePhotonMapper: PhotonMapper {
 };
 
 REGISTER_RENDERER(PhotonMapper, photon_mapper);
-REGISTER_RENDERER(PhotonMapper, ada_photon_mapper);
+REGISTER_RENDERER(AdaptivePhotonMapper, ada_photon_mapper);
