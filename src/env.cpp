@@ -40,7 +40,8 @@ void Environment::init_test_env() {
   // back
   add_wall(Vec3(40, 0, 0), Vec3(40, 40, 0), Vec3(0, 40, 0), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
   // left
-  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
+  //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
+  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(1, 1, 1)));
   // right
   add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
   // ceil
@@ -50,7 +51,7 @@ void Environment::init_test_env() {
 
   // objects
   add_object(new Sphere(Vec3(20, 20, 20), 10,
-                        new Diffuse(Vec3(0.5, 0.5, 0.5))));
+                        new Diffuse(Vec3(0.5, 0.5, 0.9))));
                         //new Refraction(1.5,
   //Vec3(0.8, 0.8, 0.8),
   //Vec3(0.5, 0.5, 0.5))));

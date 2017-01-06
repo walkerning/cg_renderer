@@ -6,6 +6,7 @@
 
 using std::pair;
 
+// FIXME: brdf is often shared between multiple objects, need shared_ptr to manage
 struct BRDF {
   virtual bool is_specular() = 0;
 

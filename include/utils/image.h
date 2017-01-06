@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cassert>
 #include <unordered_map>
 #include "utils/transform.h"
 
@@ -24,7 +25,7 @@ void write_image(Vec3* im, int height, int width, double scale, std::string fnam
   // get normalized radiance
   image_scale(im_write, height, width, scale);
   // gamma correction
-  image_gamma(im_write, height, width);
+  // image_gamma(im_write, height, width);
 
   switch (type) {
   case BMP:
@@ -54,6 +55,10 @@ void write_bmp(Vec3* im, int height, int width, std::string fname) {
   int len = height * width;
   for (int i = 0; i < len; i++) {
     Vec3& color = im[i];
+    // printf("(%lf, %lf, %lf), ", color.x, color.y, color.z);
+    /* if (i % width == 0) { */
+    /*   printf("\n"); */
+    /* } */
     buf[0] = (unsigned char)std::min (255, (int)(color.z * 255));
     buf[1] = (unsigned char)std::min (255, (int)(color.y * 255));
     buf[2] = (unsigned char)std::min (255, (int)(color.x * 255));
@@ -62,4 +67,24 @@ void write_bmp(Vec3* im, int height, int width, std::string fname) {
   }
 } // bmp's color is bgra order
 
+bool load_bmp (Vec3* im, int height, int width, double inv_scale, std::string fname) {
+  std::ifstream is (fname, std::ios_base::binary);
+  if (!is) return false;
+  unsigned char buf[54];
+  is.read ((char *)buf, sizeof (buf));
 
+  // in bmp header, height could be negtive
+  int load_width = *(int *)&buf[18];
+  int load_height = abs (*(int *)&buf[22]);
+  if (load_width != width && load_height != height) {
+    std::cerr << "ERROR: <load_bmp> snapshot width and height not consistent." << std::endl;
+    return false;
+  }
+
+  int len = width * height;
+  for (int i = 0; i < len; i++) {
+    is.read ((char *)buf, 4);
+    im[i] = Vec3(buf[0] / 255.0f, buf[1] / 255.0f, buf[2] / 255.0f) * inv_scale;
+  }
+  return true;
+}

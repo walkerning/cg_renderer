@@ -28,13 +28,13 @@ struct Renderer {
   int max_depth; // max tracing depth
 
   Renderer(const RendererConf& conf) {
-    im_height = std::stoi(find_with_default(conf, "im_height", "512"));
-    im_width = std::stoi(find_with_default(conf, "im_width", "384"));
+    im_width = std::stoi(find_with_default(conf, "im_width", "512"));
+    im_height = std::stoi(find_with_default(conf, "im_height", "384"));
     im_dist = std::stoi(find_with_default(conf, "im_dist", "2"));
     // the image width
     im_size_ratio = std::stod(find_with_default(conf, "im_size_ratio", "0.015625"));
     rr_depth = std::stoi(find_with_default(conf, "rr_depth", "5"));
-    max_depth = std::stoi(find_with_default(conf, "max_depth", "15"));
+    max_depth = std::stoi(find_with_default(conf, "max_depth", "20"));
     im = new Vec3[im_height * im_width];
   }
 
@@ -44,6 +44,19 @@ struct Renderer {
 
   inline static Renderer* get_renderer(const std::string conf_fname) {
     return get_renderer(read_conf(conf_fname));
+  }
+  
+  inline static bool write_conf(RendererConf conf, const std::string conf_name) {
+    std::ofstream fs(conf_name);
+    for (auto& c : conf) {
+      fs << c.first << " = " << c.second << std::endl;
+    }
+    fs.close();
+    if (!fs) {
+      std::cerr << "ERROR: [write conf] write configuration to `" << conf_name << "` failed." << std::endl;
+      return false;
+    }
+    return true;
   }
 
   inline static RendererConf read_conf(const std::string conf_fname) {
@@ -100,7 +113,7 @@ struct _Register {
             Renderer* (*creator)(const RendererConf& conf));
 };
 
-#define REGISTER_RENDERER(struct_name, type) \
+#define REGISTER_RENDERER(struct_name, type)		\
   Renderer* _creator_##type(const RendererConf& conf) { \
     return new struct_name(conf);                       \
   }                                                     \

@@ -10,16 +10,35 @@ void PhotonMapper::do_render() {}
 AdaptivePhotonMapper::AdaptivePhotonMapper(const RendererConf& conf): PhotonMapper(conf),
                                                                       uniform_count(1),
                                                                       mutated_count(0),
-                                                                      accepted_count(1) {
+                                                                      accepted_count(1),
+								      total_photons(0) {
   num_passes = std::stoi(find_with_default(conf, "num_passes", "1000"));
   num_photons = std::stoi(find_with_default(conf, "num_photons", "10000"));
-  initial_mutation_size = std::stod(find_with_default(conf, "initial_mutation_size", "1.0"));
+  mutation_size = std::stod(find_with_default(conf, "initial_mutation_size", "1.0"));
   target_acceptance = std::stod(find_with_default(conf, "target_acceptance", "0.234"));
   snapshot_interval = std::stoi(find_with_default(conf, "snapshot_interval", "100"));
   snapshot_prefix = find_with_default(conf, "snapshot_prefix", "snapshot_");
   snapshot_type = find_with_default(conf, "snapshot_type", "bmp");
+  initial_snapshot = find_with_default(conf, "intitial_snapshot", "");
+  initial_snapshot_scale = std::stod(find_with_default(conf, "initial_snapshot_scale", "0"));
   //initial_radius = std::stod(find_with_default(conf, "initial_radius", "0.25"));
   photon_grow_rate = std::stod(find_with_default(conf, "photon_grow_rate", "0.7"));
+
+  // load initial snapshot
+  // FIXME: only support bmp... should modify to the same as write_image
+  if (!initial_snapshot.empty()) {
+    int succ = load_bmp(im, im_height, im_width, initial_snapshot_scale, initial_snapshot + ".bmp");
+    if (!succ) {
+      std::cerr << "ERROR: <adaptive_photon_mapper> load initial snapshot failed." << std::endl;
+    }
+    // load state
+    auto state = read_conf(initial_snapshot + ".state");
+    total_photons = std::stoi(find_with_default(state, "total_photons", "0"));
+    uniform_count = std::stoi(find_with_default(state, "uniform_count", "1"));
+    mutated_count = std::stoi(find_with_default(state, "mutated_count", "0"));
+    accepted_count = std::stoi(find_with_default(state, "accepted_count", "1"));
+    mutation_size = std::stoi(find_with_default(state, "mutation_size", std::to_string(mutation_size)));
+  }
 }
 
 bool AdaptivePhotonMapper::trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path,
@@ -65,7 +84,7 @@ void AdaptivePhotonMapper::do_render() {
   Vec3 cy = (cx % env->camera->dir).normalize() * im_size_ratio;
   for (int pass = 0; pass < num_passes; pass++) {
     fprintf(stderr, "Pass #%d:\n", pass);
-
+    hit_points.clear();
     // eye tracing pass: shoot ray from camera
     for (iy = 0; iy < im_height; iy++) {
       fprintf(stderr, "\r[eye tracing] Pass #%d: %d / %d rows", pass,
@@ -126,7 +145,9 @@ void AdaptivePhotonMapper::do_render() {
         } else {
           is_visible(cur_path);
         }
-        mutation_size = mutation_size + (accepted_count / mutated_count - target_acceptance) / mutated_count;
+        mutation_size = mutation_size + (double(accepted_count) / mutated_count - target_acceptance) / double(mutated_count);
+	// clip mutation size to avoid mutation_size < 0
+	mutation_size = std::max(mutation_size, 1e-4);
       }
     }
     fprintf(stderr, " ... FINISHED\n");
@@ -134,28 +155,55 @@ void AdaptivePhotonMapper::do_render() {
     // progressively accumulate the radiance, reduce the flux and radius of hit points
     accumulate_radiance();
     printf("accumulate finish\n");
+
+    total_photons += num_photons;
     // Progressively store the image
     if (snapshot_interval > 0 && pass > 0 && pass % snapshot_interval == 0) {
-      double scale = uniform_count / double(pass * num_photons);
+      double scale = uniform_count / double(total_photons);
       std::string fname = snapshot_prefix + std::to_string(pass) + "." + snapshot_type;
-      fprintf(stderr, "[write image] writing image to %s", fname.c_str());
+      std::string state_fname = snapshot_prefix + std::to_string(pass) + ".state";
+      fprintf(stderr, "[write image] writing image to %s. scale %lf", fname.c_str(), scale);
       write_image(im, im_height, im_width, scale, fname, snapshot_type);
+      write_conf(dump_state(), state_fname);
       fprintf(stderr, " ... FINISHED\n");
     }
   }
 }
 
+RendererConf AdaptivePhotonMapper::dump_state() {
+  RendererConf state = {
+    {"total_photons", std::to_string(total_photons)},
+    {"uniform_count", std::to_string(uniform_count)},
+    {"mutated_count", std::to_string(mutated_count)},
+    {"accepted_count", std::to_string(accepted_count)},
+    {"mutation_size", std::to_string(mutation_size)}
+  };
+  return state;
+}
+
 void AdaptivePhotonMapper::accumulate_radiance() {
+  int ht_num = 0;
   for (auto hp : hit_points) {
-    double ratio = (hp->N + photon_grow_rate * hp->M) / (hp->N + hp->M);
-    hp->radius_sqr = hp->radius_sqr * ratio;
-    hp->flux = hp->flux * ratio;
-    hp->M = 0; // reset photon count of current photon tracing pass
+    if (hp->M != 0) {
+      // printf("N: %d; M: %d\n", hp->N, hp->M);
+      double ratio = (hp->N + photon_grow_rate * hp->M) / (hp->N + hp->M);
+      hp->radius_sqr = hp->radius_sqr * ratio;
+      hp->flux = hp->flux * ratio;
+      hp->N = hp->M + hp->N;
+      hp->M = 0; // reset photon count of current photon tracing pass
+      ht_num += 1;
+    }
   }
+  fprintf(stderr, "hited hitpoint: %d\n", ht_num);
   // accumulate radiance to image
   int len = hit_points.size();
   for (int i = 0; i < len; i++) {
-    im[i] = hit_points[i]->flux / M_PI / hit_points[i]->radius_sqr;
+    int im_ind = hit_points[i]->pixel_y * im_width + hit_points[i]->pixel_x;
+    //printf("(%d, %d), ", hit_points[i]->pixel_y, hit_points[i]->pixel_x);
+    // if (i % 50 == 0) {
+    //   printf("\n");
+    // }
+    im[im_ind] = im[im_ind] + hit_points[i]->flux / M_PI / hit_points[i]->radius_sqr;
   }
 }
 
@@ -216,11 +264,17 @@ void AdaptivePhotonMapper::splat_hit_points(Vec3 intersection, Vec3 normal, Vec3
     //printf("dis_sqr: %lf; radius_sqr: %lf\n", dis.dot(dis), hitpoint->radius_sqr);
     if ((hitpoint->normal.dot(normal) > normal_eps) && dis.dot(dis) <= hitpoint->radius_sqr) {
       // accumulate unormalized flux on this hit point
-      //printf("visible! hitpoint hit!\n");
+      // printf("visible! hitpoint hit!\n");
       visible = true;
-      hitpoint->flux = hitpoint->flux + flux;
+      hitpoint->flux = hitpoint->flux + flux * hitpoint->weight;
+      // printf("hitpoint weight: ");
+      // hitpoint->weight.print();
+      //printf(";  accumulated flux: ");
+      //hitpoint->flux.print();
+      // printf(";  ray in flux: ");
+      // flux.print();
       hitpoint->M = hitpoint->M + 1;
-      hitpoint->N = hitpoint->N + 1;
+      //hitpoint->N = hitpoint->N + 1;
     }
     hp = hp->next;
   }

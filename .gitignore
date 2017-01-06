@@ -1,3 +1,4 @@
+
 # Prerequisites
 *.d
 
@@ -36,3 +37,8 @@ build/
 
 # configurations
 *.conf
+
+# assets
+*.bmp
+bmp*/
+logs/

@@ -21,7 +21,7 @@ struct AdaptivePhotonMapper: PhotonMapper {
   // Configurations
   int num_passes; // # of passes
   int num_photons; // # of photon per pass
-  double initial_mutation_size;
+  // double initial_mutation_size; // this conf will be stored in mutation_size
   double target_acceptance;
 
   int snapshot_interval; // interval of snapshoting image to disk. default to `100`.
@@ -33,8 +33,12 @@ struct AdaptivePhotonMapper: PhotonMapper {
 
   double photon_grow_rate; // expected photon grow rate, used to calculate the radius reduce rate. `alpha` in the paper.
 
+  std::string initial_snapshot;
+  double initial_snapshot_scale;
+  
   // MCMC render attributes
   vector<HitPoint*> hit_points;
+  int total_photons;
   int uniform_count;
   int mutated_count;
   int accepted_count;
@@ -60,6 +64,8 @@ struct AdaptivePhotonMapper: PhotonMapper {
 
   // progressively accumulate the radiance, reduce the flux and radius of hit points
   void accumulate_radiance();
+
+  RendererConf dump_state();
 
   static bool trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out, Path& path,
                         Object* obj, Vec3 intersection, BRDF* brdf, int detph);

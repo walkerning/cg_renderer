@@ -35,7 +35,7 @@ struct Object {
   virtual Vec3 get_centroid() = 0;
 
   // Return type information
-  virtual inline const char* type() const = 0;
+  virtual const char* type() const = 0;
 
   virtual ~Object() {}
 };
@@ -92,7 +92,7 @@ struct Triangle: Object {
   virtual Vec3 get_centroid() {
     return (v[0] + v[1] + v[2])/3.;
   }
-  virtual inline const char* type() const { return "Triangle"; }
+  virtual const char* type() const { return "Triangle"; }
 };
 
 struct NormalizedTriangle: Triangle {
@@ -114,7 +114,7 @@ struct NormalizedTriangle: Triangle {
       v_normal[2] * (sub_area3 / area);
   }
 
-  virtual inline const char* type() const { return "NormalizedTriangle"; }
+  virtual const char* type() const { return "NormalizedTriangle"; }
 };
 
 struct Sphere: Object {
@@ -155,7 +155,7 @@ struct Sphere: Object {
     return position;
   }
 
-  virtual inline const char* type() const { return "Sphere"; }
+  virtual const char* type() const { return "Sphere"; }
 };
 
 struct MeshObject: Object {
@@ -263,5 +263,5 @@ struct MeshObject: Object {
     return position;
   }
 
-  virtual inline const char* type() const { return "Mesh"; }
+  virtual const char* type() const { return "Mesh"; }
 };
