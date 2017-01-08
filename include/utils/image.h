@@ -18,12 +18,16 @@ void write_image(Vec3* im, int height, int width, double scale, std::string fnam
   // copy to im_write
   int len = height * width;
   Vec3* im_write = new Vec3[len];
+  double sum = 0;
   for (int i = 0; i < len; i++) {
     im_write[i] = im[i];
+    sum += im_write[i].x + im_write[i].y + im_write[i].z;
   }
 
+  // try auto exposure
+  scale = 3 * 0.18 * len / sum;
   // get normalized radiance
-  image_scale(im_write, height, width, scale);
+  image_scale(im_write, height, width, Vec3(scale, scale, scale));
   // gamma correction
   // image_gamma(im_write, height, width);
 

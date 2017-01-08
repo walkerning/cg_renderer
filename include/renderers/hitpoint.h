@@ -2,6 +2,8 @@
 #include "vec3.h"
 
 struct HitPoint {
+  HitPoint(int pixel_x_, int pixel_y_): pixel_x(pixel_x_), pixel_y(pixel_y_) {}
+
   HitPoint(Vec3 position_, Vec3 normal_, Vec3 weight_, int pixel_x_, int pixel_y_): position(position_),
                                                                                     normal(normal_),
                                                                                     weight(weight_),

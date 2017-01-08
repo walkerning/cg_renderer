@@ -31,39 +31,40 @@ void Environment::build_bvh() {
 }
 
 void Environment::init_test_env() {
-  // light = new RadPointLight(Vec3(39, 20, 20));
+  light = new RadPointLight(Vec3(20, 39, 20));
   // camera = new Camera(Vec3(20, 20, 1), Vec3(0, 0, 1));
+  camera = new Camera(Vec3(20, 20, -20), Vec3(0, 0, 1));
 
-  // // walls
-  // // front
-  // add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  // walls
+  // front
+  add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 1)));
   // // back
   // add_wall(Vec3(40, 0, 0), Vec3(40, 40, 0), Vec3(0, 40, 0), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
-  // // left
-  // //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
-  // add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(1, 1, 1)));
-  // // right
-  // add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
-  // // ceil
-  // add_wall(Vec3(40, 40, 0), Vec3(40, 0, 0), Vec3(40, 0, 40), Vec3(40, 40, 40), new Diffuse(Vec3(0.5, 0.5, 0.5)));
-  // // floor
-  // add_wall(Vec3(0, 40, 0), Vec3(0, 0, 40), Vec3(0, 0, 0), Vec3(0, 40, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  // left
+  //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
+  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(1, 1, 1)));
+  // right
+  add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.2, 0.1, 0.1)));
+  // ceil
+  add_wall(Vec3(40, 40, 0), Vec3(40, 0, 0), Vec3(40, 0, 40), Vec3(40, 40, 40), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  // floor
+  add_wall(Vec3(0, 40, 0), Vec3(0, 0, 40), Vec3(0, 0, 0), Vec3(0, 40, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
 
-  // // objects
-  // add_object(new Sphere(Vec3(20, 20, 20), 10,
-  //                       new Diffuse(Vec3(0.5, 0.5, 0.9))));
-  //                       //new Refraction(1.5,
-  // //Vec3(0.8, 0.8, 0.8),
-  // //Vec3(0.5, 0.5, 0.5))));
+  // objects
+  add_object(new Sphere(Vec3(20, 20, 20), 5,
+                        new Diffuse(Vec3(0.3, 0.1, 0.9))));
+                        //new Refraction(1.5,
+  //Vec3(0.8, 0.8, 0.8),
+  //Vec3(0.5, 0.5, 0.5))));
 
-  //add_wall(Vec3(2, 1, 1), Vec3(2, -1, 1), Vec3(0, -1, 1), Vec3(0, 1, 1), new Diffuse(Vec3(0.5, 0.5, 0.5))); // front
-  add_wall(Vec3(2, -1, -1), Vec3(2, 1, -1), Vec3(0, 1, -1), Vec3(0, -1, -1), new Diffuse(Vec3(0.725, 0.71, 0.68))); // back
-  add_wall(Vec3(2, -1, 1), Vec3(2, -1, -1), Vec3(0, -1, -1), Vec3(0, -1, 1), new Diffuse(Vec3(0.63, 0.065, 0.05))); // left
-  add_wall(Vec3(2, 1, -1), Vec3(2, 1, 1), Vec3(0, 1, 1), Vec3(0, 1, -1), new Diffuse(Vec3(0.14, 0.45, 0.091))); // right
-  add_wall(Vec3(2, 1, -1), Vec3(2, -1, -1), Vec3(2, -1, 1), Vec3(2, 1, 1), new Diffuse(Vec3(0.725, 0.71, 0.68))); // ceil
-  add_wall(Vec3(0, 1, -1), Vec3(0, -1, 1), Vec3(0, -1, -1), Vec3(0, 1, -1), new Diffuse(Vec3(0.725, 0.71, 0.68))); // floor
-  camera = new Camera(Vec3(1, 0, 6.838), Vec3(0, 0, -1));
-  light = new RadPointLight(Vec3(1.998, 0, 0));
+  // //add_wall(Vec3(2, 1, 1), Vec3(2, -1, 1), Vec3(0, -1, 1), Vec3(0, 1, 1), new Diffuse(Vec3(0.5, 0.5, 0.5))); // front
+  // add_wall(Vec3(2, -1, -1), Vec3(2, 1, -1), Vec3(0, 1, -1), Vec3(0, -1, -1), new Diffuse(Vec3(0.725, 0.71, 0.68))); // back
+  // add_wall(Vec3(2, -1, 1), Vec3(2, -1, -1), Vec3(0, -1, -1), Vec3(0, -1, 1), new Diffuse(Vec3(0.63, 0.065, 0.05))); // left
+  // add_wall(Vec3(2, 1, -1), Vec3(2, 1, 1), Vec3(0, 1, 1), Vec3(0, 1, -1), new Diffuse(Vec3(0.14, 0.45, 0.091))); // right
+  // add_wall(Vec3(2, 1, -1), Vec3(2, -1, -1), Vec3(2, -1, 1), Vec3(2, 1, 1), new Diffuse(Vec3(0.725, 0.71, 0.68))); // ceil
+  // add_wall(Vec3(0, 1, -1), Vec3(0, -1, 1), Vec3(0, -1, -1), Vec3(0, 1, -1), new Diffuse(Vec3(0.725, 0.71, 0.68))); // floor
+  // camera = new Camera(Vec3(1, 0, 6.838), Vec3(0, 0, -1));
+  // light = new RadPointLight(Vec3(1.998, 0, 0));
 }
 
 void Environment::init_env_from_file(std::string) {

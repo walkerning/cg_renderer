@@ -21,7 +21,7 @@ AdaptivePhotonMapper::AdaptivePhotonMapper(const RendererConf& conf): PhotonMapp
   snapshot_type = find_with_default(conf, "snapshot_type", "bmp");
   initial_snapshot = find_with_default(conf, "intitial_snapshot", "");
   initial_snapshot_scale = std::stod(find_with_default(conf, "initial_snapshot_scale", "0"));
-  //initial_radius = std::stod(find_with_default(conf, "initial_radius", "0.25"));
+  initial_radius = std::stod(find_with_default(conf, "initial_radius", "0.2"));
   photon_grow_rate = std::stod(find_with_default(conf, "photon_grow_rate", "0.7"));
 
   // load initial snapshot
@@ -50,10 +50,12 @@ bool AdaptivePhotonMapper::trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out
     // FIXME: shared status used, hard to parallelize now.
     // render->hit_points[render->iy * im_width + render->ix] = Hit
     AdaptivePhotonMapper* t_render = dynamic_cast<AdaptivePhotonMapper*>(render);
-    t_render->hit_points.push_back(new HitPoint(intersection,
-                                                obj->get_normal(intersection),
-                                                ray_in.flux,
-                                                t_render->ix, t_render->iy));
+    int index = t_render->iy * t_render->im_width + t_render->ix;
+    t_render->hit_points[index]->position = intersection;
+    t_render->hit_points[index]->normal = obj->get_normal(intersection),
+    t_render->hit_points[index]->weight = ray_in.flux;
+    // t_render->hit_points[index]->pixel_x = t_render->ix;
+    // t_render->hit_points[index]->pixel_y = t_render->iy;
 
     return false;
   }
@@ -79,12 +81,26 @@ bool AdaptivePhotonMapper::trace_light(Renderer* render, Ray& ray, Ray& ray_out,
   return true;
 }
 
+// for debug
+std::ostream& operator<<(std::ostream& out, Vec3& v) { out << "Vec3(" << v.x << ", " << v.y << ", " << v.z << ")"; }
+
 void AdaptivePhotonMapper::do_render() {
   Vec3 cx(im_size_ratio);
   Vec3 cy = (cx % env->camera->dir).normalize() * im_size_ratio;
+  std::cerr << "cx: " << cx << "\tcy:" << cy << std::endl; 
+  // FIXME: Calculate_initial_radius... the initial radius calculate heurestic need bbox of hitpoints. 
+  // but it's difficult to calculate the exact extent bounding box
+  // of hitpoints when hitpoints perturb every pass...
+  // Can specify the space size... 
+  for (iy = 0; iy < im_height; iy++) {
+    for (ix = 0; ix < im_width; ix++) {
+      HitPoint* hp = new HitPoint(ix, iy);
+      hp->radius_sqr = initial_radius * initial_radius;
+      hit_points.push_back(hp);
+    }
+  }
   for (int pass = 0; pass < num_passes; pass++) {
     fprintf(stderr, "Pass #%d:\n", pass);
-    hit_points.clear();
     // eye tracing pass: shoot ray from camera
     for (iy = 0; iy < im_height; iy++) {
       fprintf(stderr, "\r[eye tracing] Pass #%d: %d / %d rows", pass,
@@ -158,10 +174,11 @@ void AdaptivePhotonMapper::do_render() {
 
     total_photons += num_photons;
     // Progressively store the image
-    if (snapshot_interval > 0 && pass > 0 && pass % snapshot_interval == 0) {
-      double scale = uniform_count / double(total_photons);
-      std::string fname = snapshot_prefix + std::to_string(pass) + "." + snapshot_type;
-      std::string state_fname = snapshot_prefix + std::to_string(pass) + ".state";
+    if (snapshot_interval > 0 && (pass + 1) % snapshot_interval == 0) {
+      // double scale = uniform_count / double(total_photons);
+      double scale = 1; // FIXME: no meaning, because of the auto exposure
+      std::string fname = snapshot_prefix + std::to_string(pass + 1) + "." + snapshot_type;
+      std::string state_fname = snapshot_prefix + std::to_string(pass + 1) + ".state";
       fprintf(stderr, "[write image] writing image to %s. scale %lf", fname.c_str(), scale);
       write_image(im, im_height, im_width, scale, fname, snapshot_type);
       write_conf(dump_state(), state_fname);
@@ -185,15 +202,20 @@ void AdaptivePhotonMapper::accumulate_radiance() {
   int ht_num = 0;
   for (auto hp : hit_points) {
     if (hp->M != 0) {
-      // printf("N: %d; M: %d\n", hp->N, hp->M);
-      double ratio = (hp->N + photon_grow_rate * hp->M) / (hp->N + hp->M);
-      hp->radius_sqr = hp->radius_sqr * ratio;
-      hp->flux = hp->flux * ratio;
-      hp->N = hp->M + hp->N;
-      hp->M = 0; // reset photon count of current photon tracing pass
       ht_num += 1;
     }
   }
+  // for (auto hp : hit_points) {
+  //   if (hp->M != 0) {
+  //     // printf("N: %d; M: %d\n", hp->N, hp->M);
+  //     double ratio = (double)(hp->N + photon_grow_rate * hp->M) / (hp->N + hp->M);
+  //     hp->radius_sqr = hp->radius_sqr * ratio;
+  //     hp->flux = hp->flux * ratio;
+  //     hp->N = hp->M + hp->N; // FIXME: not saved here!!!
+  //     hp->M = 0; // reset photon count of current photon tracing pass
+  //     ht_num += 1;
+  //   }
+  // }
   fprintf(stderr, "hited hitpoint: %d\n", ht_num);
   // accumulate radiance to image
   int len = hit_points.size();
@@ -203,7 +225,8 @@ void AdaptivePhotonMapper::accumulate_radiance() {
     // if (i % 50 == 0) {
     //   printf("\n");
     // }
-    im[im_ind] = im[im_ind] + hit_points[i]->flux / M_PI / hit_points[i]->radius_sqr;
+    // im[im_ind] = im[im_ind] + hit_points[i]->flux / M_PI / hit_points[i]->radius_sqr;
+    im[im_ind] = hit_points[i]->flux / M_PI / hit_points[i]->radius_sqr;
   }
 }
 
@@ -217,26 +240,33 @@ bool AdaptivePhotonMapper::is_visible(Path& path) {
 
 void AdaptivePhotonMapper::build_hash_grid() {
   hash_grid.reset();
-  bbox = BBox();
-  // calculate initial_radius
-  for (auto hp : hit_points) {
-    bbox.fit(hp->position);
-  }
+  // bbox = BBox();
+  // // calculate initial_radius
+  // for (auto hp : hit_points) {
+  //   bbox.fit(hp->position);
+  // }
 
-  initial_radius = (bbox.max - bbox.min).dot(Vec3(1, 1, 1)) / (3. * (im_width + im_height) / 2.) * 2.;
-  Vec3 extent = bbox.max - bbox.min;
+  // initial_radius = (bbox.max - bbox.min).dot(Vec3(1, 1, 1)) / (3. * (im_width + im_height) / 2.) * 2.;
+  //Vec3 extent = bbox.max - bbox.min;
   //initial_radius = extent[bbox.max_dim()] / MIN(im_height, im_width) * 2;
   for (auto hp : hit_points) {
-    hp->radius_sqr = initial_radius*initial_radius;
+    // hp->radius_sqr = initial_radius*initial_radius;
     bbox.fit(hp->position - initial_radius);
     bbox.fit(hp->position + initial_radius);
   }
-  hash_scale = 1. / (initial_radius * 2.);
+
+  // Hash cube edge length should be the diameter of the hitpoint circle
+  // As the radius of hitpoints are reducing, later pass should use bigger hash_scale for efficiency.
+  // But for now. do not change the hash scale! TODO
+  hash_scale = 1. / (initial_radius * 2.); 
+
   for (auto hp : hit_points) {
     // This loop is neccesary to make every position in hp->position +-initial_radius
     // could find `hp` in the hashing link list.
-    Vec3 bmin = (hp->position - initial_radius - bbox.min) * hash_scale;
-    Vec3 bmax = (hp->position + initial_radius - bbox.min) * hash_scale;
+    // Vec3 bmin = (hp->position - initial_radius - bbox.min) * hash_scale;
+    // Vec3 bmax = (hp->position + initial_radius - bbox.min) * hash_scale;
+    Vec3 bmin = (hp->position - initial_radius) * hash_scale;
+    Vec3 bmax = (hp->position + initial_radius) * hash_scale;
     for (int z = uint16_t(bmin.z); z <= uint16_t(bmax.z); z++) {
       for (int y = uint16_t(bmin.y); y <= uint16_t(bmax.y); y++) {
         for (int x = uint16_t(bmin.x); x <= uint16_t(bmax.x); x++) {
@@ -251,7 +281,8 @@ void AdaptivePhotonMapper::build_hash_grid() {
 void AdaptivePhotonMapper::splat_hit_points(Vec3 intersection, Vec3 normal, Vec3 flux) {
   //for dbg
   // printf("intersection: "); intersection.print(); printf("\n");
-  Vec3 hh = (intersection - bbox.min) * hash_scale;
+  //Vec3 hh = (intersection - bbox.min) * hash_scale;
+  Vec3 hh = intersection * hash_scale;
   uint16_t x = abs(int(hh.x));
   uint16_t y = abs(int(hh.y));
   uint16_t z = abs(int(hh.z));
@@ -259,17 +290,19 @@ void AdaptivePhotonMapper::splat_hit_points(Vec3 intersection, Vec3 normal, Vec3
   while (hp != NULL) {
     HitPoint* hitpoint = hp->value;
     // avoid edge brightning
-    double normal_eps = 1e-3;
+    double normal_eps = 1e-4;
     Vec3 dis = hitpoint->position - intersection;
     //printf("dis_sqr: %lf; radius_sqr: %lf\n", dis.dot(dis), hitpoint->radius_sqr);
     if ((hitpoint->normal.dot(normal) > normal_eps) && dis.dot(dis) <= hitpoint->radius_sqr) {
       // accumulate unormalized flux on this hit point
       // printf("visible! hitpoint hit!\n");
       visible = true;
-      hitpoint->flux = hitpoint->flux + flux * hitpoint->weight;
+      double ratio = (double)(hitpoint->M + 1) / (hitpoint->M + 1. / photon_grow_rate);
+      hitpoint->radius_sqr *= ratio;
+      hitpoint->flux = (hitpoint->flux + flux * hitpoint->weight) * ratio;
       // printf("hitpoint weight: ");
       // hitpoint->weight.print();
-      //printf(";  accumulated flux: ");
+      // std::cerr << "hitpoint weight: " << hitpoint->weight << "accumulated flux: " << hitpoint->flux << "\tray in flux: " << flux << std::endl;
       //hitpoint->flux.print();
       // printf(";  ray in flux: ");
       // flux.print();
@@ -277,5 +310,11 @@ void AdaptivePhotonMapper::splat_hit_points(Vec3 intersection, Vec3 normal, Vec3
       //hitpoint->N = hitpoint->N + 1;
     }
     hp = hp->next;
+  }
+}
+
+AdaptivePhotonMapper::~AdaptivePhotonMapper() {
+  for (auto& hp : hit_points) {
+    delete hp;
   }
 }

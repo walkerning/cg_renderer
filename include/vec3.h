@@ -1,5 +1,6 @@
 #pragma once
-#include <cstdio>
+#include <iostream>
+// #include <cstdio>
 #include <cmath>
 
 #define MIN(x, y) (x) >= (y)? (y) : (x)
@@ -10,7 +11,7 @@ struct Vec3 {
   double y;
   double z;
 
-  Vec3(double x_=0, double y_=0, double z_=0):x(x_), y(y_), z(z_) {}
+  explicit Vec3(double x_=0, double y_=0, double z_=0):x(x_), y(y_), z(z_) {}
 
   Vec3 operator+(const Vec3 &other) const { return Vec3(x + other.x, y + other.y, z + other.z); }
   Vec3 operator-(const Vec3 &other) const { return Vec3(x - other.x, y - other.y, z - other.z); }
@@ -33,8 +34,7 @@ struct Vec3 {
 
   double operator[](int index) const { return *(&x + index); }
 
-  // for debug
-  void print() const { printf("Vec3(%lf, %lf, %lf)", x, y, z); }
+  // void print() const { printf("Vec3(%lf, %lf, %lf)", x, y, z); }
 };
 
 inline Vec3 min_(Vec3 a, Vec3 b) {

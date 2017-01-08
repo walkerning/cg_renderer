@@ -74,6 +74,8 @@ struct AdaptivePhotonMapper: PhotonMapper {
                           Object* obj, Vec3 intersection, BRDF* brdf, int detph);
 
   void build_hash_grid();
+
+  virtual ~AdaptivePhotonMapper();
 };
 
 REGISTER_RENDERER(PhotonMapper, photon_mapper);

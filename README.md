@@ -30,6 +30,11 @@ TODO
 - [x] locality hashing实现
 - [x] debug 一个有时候出现的内存访问错误...
 - [x] write snapshot...
-- [ ] read from snapshot
+- [x] read from snapshot
+- [ ] debug效果不对: 
+    * 感觉有一些像素零零散散的没有值, 有值的像素分布也不太均匀. 
+    * 在镜面部分一些地方根本没有任何光线不科学.... 196,608个hitpoint里面在10~100 w个光子都是50000左右个hitpint被打到... 先试试把left墙壁也换成diffuse是什么效果!!! 然后再考虑是不是hash函数在0位置左右有边界情况(还是可以写一个hash的test)
+    * 现在这个版本的accept ratio普遍偏低... 
+- [ ] read scene from file方便测试
 - [ ] monitor the render process
-- [ ] debug整体效果看看不不对
+

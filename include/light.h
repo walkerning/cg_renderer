@@ -14,6 +14,7 @@ struct RadPointLight: Light {
 
   virtual Ray sample_ray(Path& path) {
     Vec3 dir = path_to_dir(path);
-    return Ray(position + dir * radius, dir, Vec3(500000, 380000, 120000));
+    // if (dir.dot()
+    return Ray(position + dir * radius, dir, Vec3(1000, 3800, 2000));
   }
 };

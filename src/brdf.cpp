@@ -72,7 +72,6 @@ Ray Diffuse::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersection) 
   // If path is already sampled, follow the already-sampled path
   Vec3 dir_out = path_to_dir(path);
   if (dir_out.dot(normal) < 0) {
-    // 这个处理全部都对吗?
     dir_out = dir_out * (-1);
   }
   return Ray(intersection, dir_out, ray_in.flux * (decay / M_PI));
