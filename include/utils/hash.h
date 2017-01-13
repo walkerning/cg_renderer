@@ -11,8 +11,9 @@ struct HashNode {
   HashNode(V value_): value(value_), next(NULL) {}
 
   HashNode* list_add(V v) {
-    next = new HashNode(v);
-    return this;
+    HashNode* new_node = new HashNode(v);
+    new_node->next = this;
+    return new_node;
   }
 
 };
@@ -54,4 +55,8 @@ uint64_t hash_3int16(uint16_t x, uint16_t y, uint16_t z) {
 
 uint64_t hash_3int16_2(uint16_t x, uint16_t y, uint16_t z) {
   return (((uint64_t)x*73856093)^((uint64_t)y*19349663)^((uint64_t)z*83492791))%137216;
+}
+
+uint64_t hash_3int16_3(uint16_t x, uint16_t y, uint16_t z) {
+  return ((uint64_t)x * 1000000007 + y) * 1000000007 + z;
 }

@@ -249,15 +249,16 @@ void AdaptivePhotonMapper::build_hash_grid() {
   // initial_radius = (bbox.max - bbox.min).dot(Vec3(1, 1, 1)) / (3. * (im_width + im_height) / 2.) * 2.;
   //Vec3 extent = bbox.max - bbox.min;
   //initial_radius = extent[bbox.max_dim()] / MIN(im_height, im_width) * 2;
-  for (auto hp : hit_points) {
-    // hp->radius_sqr = initial_radius*initial_radius;
-    bbox.fit(hp->position - initial_radius);
-    bbox.fit(hp->position + initial_radius);
-  }
+  // for (auto hp : hit_points) {
+  //   // hp->radius_sqr = initial_radius*initial_radius;
+  //   bbox.fit(hp->position - initial_radius);
+  //   bbox.fit(hp->position + initial_radius);
+  // }
 
   // Hash cube edge length should be the diameter of the hitpoint circle
   // As the radius of hitpoints are reducing, later pass should use bigger hash_scale for efficiency.
   // But for now. do not change the hash scale! TODO
+  // hash_scale = 1. / (initial_radius * 2.); 
   hash_scale = 1. / (initial_radius * 2.); 
 
   for (auto hp : hit_points) {
@@ -265,8 +266,9 @@ void AdaptivePhotonMapper::build_hash_grid() {
     // could find `hp` in the hashing link list.
     // Vec3 bmin = (hp->position - initial_radius - bbox.min) * hash_scale;
     // Vec3 bmax = (hp->position + initial_radius - bbox.min) * hash_scale;
-    Vec3 bmin = (hp->position - initial_radius) * hash_scale;
-    Vec3 bmax = (hp->position + initial_radius) * hash_scale;
+    double rad = sqrt(hp->radius_sqr);
+    Vec3 bmin = (hp->position - rad) * hash_scale;
+    Vec3 bmax = (hp->position + rad) * hash_scale;
     for (int z = uint16_t(bmin.z); z <= uint16_t(bmax.z); z++) {
       for (int y = uint16_t(bmin.y); y <= uint16_t(bmax.y); y++) {
         for (int x = uint16_t(bmin.x); x <= uint16_t(bmax.x); x++) {

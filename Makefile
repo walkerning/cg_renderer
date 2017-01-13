@@ -16,7 +16,7 @@ BUILD_DIR = build
 
 # for test
 TEST_DIR = tests
-TEST_SRCS := $(shell find $(TEST_DIR) -name "*.cpp" | xargs basename)
+TEST_SRCS := $(shell find $(TEST_DIR) -name "*.cpp" | xargs -I{} basename {})
 SRCS_NOMAIN := $(shell find $(SRC_DIR) ! -name "main.cpp" -name "*.cpp")
 TEST_BUILD_DIR = $(BUILD_DIR)/tests
 TEST_BIN := $(addprefix $(TEST_BUILD_DIR)/,${TEST_SRCS:.cpp=.bin})
