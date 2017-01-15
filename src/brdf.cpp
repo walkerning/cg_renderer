@@ -1,4 +1,5 @@
 #include "brdf.h"
+#include <cstdio> // for dbg
 
 BRDF* BRDF::get(Path& path) { return this; }
 void BRDF:: apply_absorption(Ray& ray, Vec3 start, Vec3 end, Vec3 normal) {}
@@ -6,11 +7,23 @@ void BRDF:: apply_absorption(Ray& ray, Vec3 start, Vec3 end, Vec3 normal) {}
 Reflection::Reflection(Vec3 decay_): decay(decay_) {}
 bool Reflection::is_specular() { return true; }
 Ray Reflection::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersection) {
+  double eps = 1e-2;
   Vec3 dir_in = ray_in.dir;
   // reflect direction
-  Vec3 dir_out = (dir_in - (2 * dir_in.dot(normal))).normalize();
-  Ray ray_out(intersection, dir_out, ray_in.flux * decay);
+  Vec3 dir_out = (dir_in - (normal * (2 * dir_in.dot(normal)))).normalize();
+  Ray ray_out(intersection + dir_out * eps, dir_out, ray_in.flux * decay);
   ray_out.flux = ray_in.flux * decay;
+  // fprintf(stderr, "reflect: normal: (%lf, %lf, %lf); intersection: (%lf, %lf, %lf); ray out flux: (%lf, %lf, %lf)\n", 
+  // 	  normal[0], normal[1], normal[2],
+  // 	  intersection[0], intersection[1], intersection[2],
+  // 	  ray_out.flux[0],
+  // 	  ray_out.flux[1],
+  // 	  ray_out.flux[2]);
+  // fprintf(stderr, "reflect: ray in dir: (%lf, %lf, %lf); ray out dir: (%lf, %lf, %lf)\n",
+  // 	  dir_in[0],
+  // 	  dir_in[1], dir_in[2], ray_out.dir[0],
+  // 	  ray_out.dir[1],
+  // 	  ray_out.dir[2]);
   return ray_out;
 }
 
@@ -33,36 +46,38 @@ void Refraction:: apply_absorption(Ray& ray, Vec3 start, Vec3 end, Vec3 normal) 
   ray.flux.z *= exp(-dist * absorption_decay[2]);
 }
 Ray Refraction::sample_ray(Path& path, Ray ray_in, Vec3 normal, Vec3 intersection) {
+  double eps = 1e-2;
   Vec3 dir_in = ray_in.dir; // .normalize()
   bool into = (cos < 0);
   double cos = dir_in.dot(normal);
   double sin_in = cathetus(1, cos);
   double index_ratio = into? refract_index : 1/refract_index;
   double sin_out = sin_in / index_ratio;
-  Vec3 reflect_out = (dir_in - (2 * dir_in.dot(normal))).normalize();
+  Vec3 reflect_out = (dir_in - (normal * (2 * dir_in.dot(normal)))).normalize();
 
   if (sin_out > 1) { // full reflection
     // FIXME: 从里向外全反射时, 应该有衰减还是没有?
-    return Ray(intersection, reflect_out, ray_in.flux * Vec3(1, 1, 1));
+    return Ray(intersection + reflect_out * eps, reflect_out, ray_in.flux * Vec3(1, 1, 1));
   } else {
     // Decide refract or reflect.
     double select = path.next_value();
     // Calculate refraction probability of this incidence angley
     // https://en.wikipedia.org/wiki/Fresnel_equations
     double cos_out = cathetus(1, sin_out);
-    double cos_in = -cos;
+    double cos_in = std::abs(cos);
     // s-极化分量反射比
     double R_s = ((cos_in - index_ratio * cos_out)/(cos_in + index_ratio * cos_out));
     // p-极化分量反射比
     double R_p = ((cos_out - index_ratio * cos_in)/(cos_out + index_ratio * cos_in));
     // equal mix of s and p polarisations
     double prob_reflect = (R_s * R_s + R_p * R_p) / 2;
+    // fprintf(stderr, "prob reflect: %lf\n", prob_reflect);
     if (select < prob_reflect) {
-      return Ray(intersection, reflect_out, ray_in.flux * reflect_decay);
+      return Ray(intersection + reflect_out * eps, reflect_out, ray_in.flux * reflect_decay);
     }
     // Cal: normal direction: -N*cos_out; tangent direction: (dir_in + normal * cos_in) / index_ratio
     Vec3 refract_out = (dir_in / index_ratio + normal * (cos_in / index_ratio - cos_out)).normalize();
-    return Ray(intersection, refract_out, ray_in.flux * refract_decay);
+    return Ray(intersection + refract_out * eps, refract_out, ray_in.flux * refract_decay);
   }
 }
 // Diffuse

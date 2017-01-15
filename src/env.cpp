@@ -14,13 +14,14 @@ void Environment::add_object(Object* obj) {
     for (auto tri : dynamic_cast<MeshObject*>(obj)->triangles) {
       add_object(tri);
     }
+    fprintf(stderr, "[load object] added mesh! triangles number: %d\n", dynamic_cast<MeshObject*>(obj)->triangles.size());
   } else {
     objects.push_back(obj);
   }
 }
 
 void Environment::build_bvh() {
-  std::cerr << "INFO: <Environment> building BVH ..." << std::endl;
+  std::cerr << "INFO: <Environment> building BVH ... objects number: " << objects.size() << std::endl;
   if (bvh != NULL) {
     delete bvh;
     bvh = NULL;
@@ -31,29 +32,61 @@ void Environment::build_bvh() {
 }
 
 void Environment::init_test_env() {
-  light = new RadPointLight(Vec3(20, 39, 20));
+  //light = new RadPointLight(Vec3(20, 39, 20), Vec3(1000, 3800, 2000));
+  light = new RadPointLight(Vec3(20, 39, 20), Vec3(2000, 2000, 2000));
   // camera = new Camera(Vec3(20, 20, 1), Vec3(0, 0, 1));
   camera = new Camera(Vec3(20, 20, -20), Vec3(0, 0, 1));
-
-  // walls
   // front
-  add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 1)));
-  // // back
-  // add_wall(Vec3(40, 0, 0), Vec3(40, 40, 0), Vec3(0, 40, 0), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
-  // left
-  //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
-  //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(1, 1, 1)));
-  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Diffuse(Vec3(0.8, 0.2, 0.1)));
-  // right
-  add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.2, 0.1, 0.1)));
+  //add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 1)));
+  add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0, 0, 1)));
   // ceil
-  add_wall(Vec3(40, 40, 0), Vec3(40, 0, 0), Vec3(40, 0, 40), Vec3(40, 40, 40), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Diffuse(Vec3(1, 0.2, 0.1)));
+  add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Diffuse(Vec3(1, 0, 0.1)));
   // floor
-  add_wall(Vec3(0, 40, 0), Vec3(0, 40, 40), Vec3(0, 0, 40), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  //add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.2, 0.1, 0.1)));
+  add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.2, 0.1, 0.1)));
+  // right
+  add_wall(Vec3(40, 40, 0), Vec3(40, 0, 0), Vec3(40, 0, 40), Vec3(40, 40, 40), new Reflection(Vec3(0.7, 0.7, 0.7)));
+  //add_wall(Vec3(40, 40, 0), Vec3(40, 0, 0), Vec3(40, 0, 40), Vec3(40, 40, 40), new Diffuse(Vec3(0.9, 0.9, 0.9)));
+  // left
+  //add_wall(Vec3(0, 40, 0), Vec3(0, 40, 40), Vec3(0, 0, 40), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  add_wall(Vec3(0, 40, 0), Vec3(0, 40, 40), Vec3(0, 0, 40), Vec3(0, 0, 0), new Diffuse(Vec3(0, 1, 0)));
 
   // objects
-  add_object(new Sphere(Vec3(20, 20, 30), 5,
-                        new Diffuse(Vec3(0.3, 0.1, 0.9))));
+  // add_object(new Sphere(Vec3(20, 20, 30), 5,
+  //                       new Diffuse(Vec3(0.3, 0.1, 0.9))));
+  // add_object(new Sphere(Vec3(20, 20, 30), 5,
+  // 			new Refraction(1.5,
+  // 				       Vec3(0.8, 0.8, 0.8),
+  // 				       Vec3(0.5, 0.5, 0.5))));
+  add_object(new Sphere(Vec3(30, 20, 30), 5,
+  			new Refraction(1.5,
+  				       Vec3(0.3, 0.3, 0.3),
+  				       Vec3(0.6, 0.6, 0.6))));
+    
+  add_object(new Sphere(Vec3(10, 30, 10), 8,
+  			new Reflection(Vec3(0.95, 0.95, 0.95))));
+    
+  // add_object(new MeshObject(Vec3(20, 20, 30), "./dragon.obj", new Diffuse(Vec3(0.5, 0.5, 0.5))));
+  // walls
+  // // front
+  // add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 1)));
+  // // // back
+  // // add_wall(Vec3(40, 0, 0), Vec3(40, 40, 0), Vec3(0, 40, 0), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  // // left
+  // //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(0.95, 0.95, 0.95)));
+  // //add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Reflection(Vec3(1, 1, 1)));
+  // add_wall(Vec3(40, 0, 40), Vec3(40, 0, 0), Vec3(0, 0, 0), Vec3(0, 0, 40), new Diffuse(Vec3(0.8, 0.2, 0.1)));
+  // // right
+  // add_wall(Vec3(40, 40, 0), Vec3(40, 40, 40), Vec3(0, 40, 40), Vec3(0, 40, 0), new Diffuse(Vec3(0.2, 0.1, 0.1)));
+  // // right
+  // add_wall(Vec3(40, 40, 0), Vec3(40, 0, 0), Vec3(40, 0, 40), Vec3(40, 40, 40), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+  // // left
+  // add_wall(Vec3(0, 40, 0), Vec3(0, 40, 40), Vec3(0, 0, 40), Vec3(0, 0, 0), new Diffuse(Vec3(0.5, 0.5, 0.5)));
+
+  // // objects
+  // add_object(new Sphere(Vec3(20, 20, 30), 5,
+  //                       new Diffuse(Vec3(0.3, 0.1, 0.9))));
                         //new Refraction(1.5,
   //Vec3(0.8, 0.8, 0.8),
   //Vec3(0.5, 0.5, 0.5))));

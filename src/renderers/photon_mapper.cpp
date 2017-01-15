@@ -51,6 +51,8 @@ bool AdaptivePhotonMapper::trace_eye(Renderer* render, Ray& ray_in, Ray& ray_out
     // render->hit_points[render->iy * im_width + render->ix] = Hit
     AdaptivePhotonMapper* t_render = dynamic_cast<AdaptivePhotonMapper*>(render);
     int index = t_render->iy * t_render->im_width + t_render->ix;
+    // fprintf(stderr, "%d, ", index);
+    t_render->hit_points_splatted += 1;
     t_render->hit_points[index]->position = intersection;
     t_render->hit_points[index]->normal = obj->get_normal(intersection),
     t_render->hit_points[index]->weight = ray_in.flux;
@@ -102,6 +104,7 @@ void AdaptivePhotonMapper::do_render() {
   for (int pass = 0; pass < num_passes; pass++) {
     fprintf(stderr, "Pass #%d:\n", pass);
     // eye tracing pass: shoot ray from camera
+    hit_points_splatted = 0;
     for (iy = 0; iy < im_height; iy++) {
       fprintf(stderr, "\r[eye tracing] Pass #%d: %d / %d rows", pass,
               iy + 1, im_height);
@@ -120,7 +123,7 @@ void AdaptivePhotonMapper::do_render() {
       }
     }
     fprintf(stderr, " ... FINISHED\n");
-
+    fprintf(stderr, "hit_points_splatted: %d\n", hit_points_splatted);
     fprintf(stderr, "[building hash] Pass #%d", pass);
     build_hash_grid();
     fprintf(stderr, " ... FINISHED\n");
@@ -267,8 +270,8 @@ void AdaptivePhotonMapper::build_hash_grid() {
     // Vec3 bmin = (hp->position - initial_radius - bbox.min) * hash_scale;
     // Vec3 bmax = (hp->position + initial_radius - bbox.min) * hash_scale;
     double rad = sqrt(hp->radius_sqr);
-    Vec3 bmin = (hp->position - rad) * hash_scale;
-    Vec3 bmax = (hp->position + rad) * hash_scale;
+    Vec3 bmin = (hp->position - initial_radius) * hash_scale;
+    Vec3 bmax = (hp->position + initial_radius) * hash_scale;
     for (int z = uint16_t(bmin.z); z <= uint16_t(bmax.z); z++) {
       for (int y = uint16_t(bmin.y); y <= uint16_t(bmax.y); y++) {
         for (int x = uint16_t(bmin.x); x <= uint16_t(bmax.x); x++) {
@@ -285,9 +288,9 @@ void AdaptivePhotonMapper::splat_hit_points(Vec3 intersection, Vec3 normal, Vec3
   // printf("intersection: "); intersection.print(); printf("\n");
   //Vec3 hh = (intersection - bbox.min) * hash_scale;
   Vec3 hh = intersection * hash_scale;
-  uint16_t x = abs(int(hh.x));
-  uint16_t y = abs(int(hh.y));
-  uint16_t z = abs(int(hh.z));
+  uint16_t x = (uint16_t)hh.x;
+  uint16_t y = (uint16_t)hh.y;
+  uint16_t z = (uint16_t)hh.z;
   auto hp = hash_grid.find(hash_3int16_2(x, y, z));
   while (hp != NULL) {
     HitPoint* hitpoint = hp->value;

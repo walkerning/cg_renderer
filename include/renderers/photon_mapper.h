@@ -52,6 +52,9 @@ struct AdaptivePhotonMapper: PhotonMapper {
   double hash_scale; // calculate using radius.
   bool visible; // FIXME: instance shared status hard to parallelize different path
 
+  // for dbg
+  int hit_points_splatted;
+
   // TODO: maybe rebuild hash map
 
   AdaptivePhotonMapper(const RendererConf& conf);

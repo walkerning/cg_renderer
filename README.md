@@ -31,9 +31,10 @@ TODO
 - [x] debug 一个有时候出现的内存访问错误...
 - [x] write snapshot...
 - [x] read from snapshot
-- [ ] monitor the render process
 - [ ] read scene from file方便测试, light, camera, 各个物体.. 看看obj文件, 不行自己定义一个文件格式也行
-- [ ] debug效果不对: 还有不少的噪点, 调一些参数看看噪点怎么变
-- [ ] 调试反射, 透射, 焦散现象
+- [ ] debug效果不对: 还有不少的噪点, 调一些参数看看噪点怎么变.
+- [ ] 调试反射, 透射
 - [ ] 试试斯坦福龙等物体加入
+- [ ] 焦散现象
 - [ ] hashing部分加速, 过段时间rebuild hash.
+- [ ] monitor the render process

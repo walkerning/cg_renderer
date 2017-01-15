@@ -176,6 +176,7 @@ struct MeshObject: Object {
 
   // Borrowed code from cobra.cpp
   void load_obj_from_stream(std::istream& is) {
+    fprintf(stderr, "[load object] loading mesh obj from stream\n");
     float x, y, z;
     std::string str;
     char dummy;
@@ -207,24 +208,36 @@ struct MeshObject: Object {
               index.pos[2] >> dummy >> index.uv[2] >> dummy >> index.normal[2];
           } else if (count == 3) { // pos/uv, no normal. "f 181/176 182/182 209/208"
             iss >> token >> index.pos[0] >> dummy >> index.uv[0] >> index.pos[1] >> dummy >> index.uv[1] >> index.pos[2] >> dummy >> index.uv[2];
-          }
+          } else {
+	    iss >> token >> index.pos[0] >> index.pos[1] >> index.pos[2];
+	  }
         }
         indexBuffer.push_back (index);
       }
     } // end parsing
+    // fprintf(stderr, "posbuffer %d, normalbuffer %d\n", posBuffer.size(), normalBuffer.size());
     for (auto &index : indexBuffer) {
       for (int i = 0; i < 3; i++) {
         if (index.pos[i] < 0) index.pos[i] += (int)posBuffer.size ();
         if (index.uv[i] < 0) index.uv[i] += (int)uvBuffer.size ();
         if (index.normal[i] < 0) index.normal[i] += (int)normalBuffer.size ();
       } // deal with negative index
-      triangles.push_back(new NormalizedTriangle(posBuffer[index.pos[0]] + position,
-                                                 posBuffer[index.pos[1]] + position,
-                                                 posBuffer[index.pos[2]] + position,
-                                                 normalBuffer[index.normal[0]],
-                                                 normalBuffer[index.normal[1]],
-                                                 normalBuffer[index.normal[2]],
-                                                 brdf));
+      Triangle* t = new Triangle(posBuffer[index.pos[0]] + position,
+				 posBuffer[index.pos[1]] + position,
+				 posBuffer[index.pos[2]] + position,
+				 brdf);
+      /* fprintf(stderr, "triangle: (%lf, %lf, %lf), (%lf, %lf, %lf), (%lf, %lf, %lf)\n", */
+      /* 	      t->v[0][0], t->v[0][1], t->v[0][2], */
+      /* 	      t->v[1][0], t->v[1][1], t->v[1][2], */
+      /* 	      t->v[2][0], t->v[2][1], t->v[2][2]); */
+      triangles.push_back(t);
+      /* triangles.push_back(new NormalizedTriangle(posBuffer[index.pos[0]] + position, */
+      /*                                            posBuffer[index.pos[1]] + position, */
+      /*                                            posBuffer[index.pos[2]] + position, */
+      /*                                            normalBuffer[index.normal[0]], */
+      /*                                            normalBuffer[index.normal[1]], */
+      /*                                            normalBuffer[index.normal[2]], */
+      /*                                            brdf)); */
     }
   }
 
@@ -259,7 +272,7 @@ struct MeshObject: Object {
     return Vec3(0, 0, 0);
   }
 
-  virtual Vec3 get_centroid(Vec3 pos) {
+  virtual Vec3 get_centroid() {
     return position;
   }
 

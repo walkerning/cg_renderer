@@ -9,12 +9,13 @@ struct Light {
 struct RadPointLight: Light {
   Vec3 position;
   double radius;
+  Vec3 flux;
 
-  RadPointLight(Vec3 pos, double radius_=0): position(pos), radius(radius_) {}
+  RadPointLight(Vec3 pos, Vec3 flux_, double radius_=0): position(pos), flux(flux_), radius(radius_) {}
 
   virtual Ray sample_ray(Path& path) {
     Vec3 dir = path_to_dir(path);
     // if (dir.dot()
-    return Ray(position + dir * radius, dir, Vec3(1000, 3800, 2000));
+    return Ray(position + dir * radius, dir, flux);
   }
 };
