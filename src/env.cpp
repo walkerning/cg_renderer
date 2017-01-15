@@ -59,15 +59,16 @@ void Environment::init_test_env() {
   // 			new Refraction(1.5,
   // 				       Vec3(0.8, 0.8, 0.8),
   // 				       Vec3(0.5, 0.5, 0.5))));
-  add_object(new Sphere(Vec3(30, 20, 30), 5,
-  			new Refraction(1.5,
-  				       Vec3(0.3, 0.3, 0.3),
-  				       Vec3(0.6, 0.6, 0.6))));
+  // add_object(new Sphere(Vec3(30, 20, 30), 5,
+  // 			new Refraction(1.5,
+  // 				       Vec3(0.3, 0.3, 0.3),
+  // 				       Vec3(0.6, 0.6, 0.6))));
     
-  add_object(new Sphere(Vec3(10, 30, 10), 8,
-  			new Reflection(Vec3(0.95, 0.95, 0.95))));
+  // add_object(new Sphere(Vec3(10, 30, 10), 8,
+  // 			new Reflection(Vec3(0.95, 0.95, 0.95))));
     
-  // add_object(new MeshObject(Vec3(20, 20, 30), "./dragon.obj", new Diffuse(Vec3(0.5, 0.5, 0.5))));
+  add_object(new MeshObject(Vec3(20, 20, 25), "./models/bunny.obj", new Diffuse(Vec3(0.8, 0.8, 0.8)), 55, Vec3(1, -1, -1)));
+  // add_object(new MeshObject(Vec3(20, 20, 25), "./models/cube.obj", new Diffuse(Vec3(0.8, 0.8, 0.8)), 5));
   // walls
   // // front
   // add_wall(Vec3(40, 40, 40), Vec3(40, 0, 40), Vec3(0, 0, 40), Vec3(0, 40, 40), new Diffuse(Vec3(0.5, 0.5, 1)));

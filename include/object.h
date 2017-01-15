@@ -164,8 +164,10 @@ struct MeshObject: Object {
   std::vector<Triangle*> triangles;
   std::vector<Vec3> posBuffer, normalBuffer, uvBuffer;
   std::vector<Index> indexBuffer;
+  double scale;
+  Vec3 scale_vec;
 
-  MeshObject(Vec3 position_, std::string model_fname, BRDF* brdf_): Object(brdf_), position(position_) {
+  MeshObject(Vec3 position_, std::string model_fname, BRDF* brdf_, double scale_=1, Vec3 scale_vec_=Vec3(1,1,1)): Object(brdf_), position(position_), scale(scale_), scale_vec(scale_vec_) {
     load_obj_from_file(model_fname);
   }
 
@@ -222,9 +224,9 @@ struct MeshObject: Object {
         if (index.uv[i] < 0) index.uv[i] += (int)uvBuffer.size ();
         if (index.normal[i] < 0) index.normal[i] += (int)normalBuffer.size ();
       } // deal with negative index
-      Triangle* t = new Triangle(posBuffer[index.pos[0]] + position,
-				 posBuffer[index.pos[1]] + position,
-				 posBuffer[index.pos[2]] + position,
+      Triangle* t = new Triangle(posBuffer[index.pos[0]-1] * scale_vec * scale + position,
+				 posBuffer[index.pos[1]-1] * scale_vec * scale + position,
+				 posBuffer[index.pos[2]-1] * scale_vec * scale + position,
 				 brdf);
       /* fprintf(stderr, "triangle: (%lf, %lf, %lf), (%lf, %lf, %lf), (%lf, %lf, %lf)\n", */
       /* 	      t->v[0][0], t->v[0][1], t->v[0][2], */

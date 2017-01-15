@@ -31,10 +31,12 @@ TODO
 - [x] debug 一个有时候出现的内存访问错误...
 - [x] write snapshot...
 - [x] read from snapshot
+- [x] 试试mesh物体加入
+- [x] 反射, 透射
 - [ ] read scene from file方便测试, light, camera, 各个物体.. 看看obj文件, 不行自己定义一个文件格式也行
 - [ ] debug效果不对: 还有不少的噪点, 调一些参数看看噪点怎么变.
-- [ ] 调试反射, 透射
-- [ ] 试试斯坦福龙等物体加入
 - [ ] 焦散现象
 - [ ] hashing部分加速, 过段时间rebuild hash.
 - [ ] monitor the render process
+- [ ] 从snapshot开始训练那么写并不对... scale是自动曝光. 现在没拿出来. 而且initial radius重新来科学吗?
+- [ ] 并行化算法. 多个MCMC采样并行算? 一起sync的加到真的hitpoint上然后accumulate?
