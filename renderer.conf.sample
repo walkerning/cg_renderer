@@ -1,0 +1,19 @@
+im_width = 512
+im_height = 384
+
+type = ada_photon_mapper
+num_passes = 10000
+im_dist = 22
+
+# 40 / 512
+im_size_ratio = 0.0781
+
+# 40 / ((512 + 384)/2) * 2
+initial_radius = 0.17857
+
+snapshot_interval = 10
+num_photons = 100000
+snapshot_prefix = results/snapshot_
+
+photon_grow_rate = 0.7
+target_acceptance = 0.234

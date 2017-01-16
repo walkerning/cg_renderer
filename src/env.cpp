@@ -33,7 +33,7 @@ void Environment::build_bvh() {
 
 void Environment::init_test_env() {
   //light = new RadPointLight(Vec3(20, 39, 20), Vec3(1000, 3800, 2000));
-  light = new RadPointLight(Vec3(20, 39, 20), Vec3(2000, 2000, 2000));
+  light = new RadPointLight(Vec3(20, 1, 20), Vec3(2000, 2000, 2000));
   // camera = new Camera(Vec3(20, 20, 1), Vec3(0, 0, 1));
   camera = new Camera(Vec3(20, 20, -20), Vec3(0, 0, 1));
   // front
@@ -65,9 +65,12 @@ void Environment::init_test_env() {
   // 				       Vec3(0.6, 0.6, 0.6))));
     
   // add_object(new Sphere(Vec3(10, 30, 10), 8,
-  // 			new Reflection(Vec3(0.95, 0.95, 0.95))));
-    
-  add_object(new MeshObject(Vec3(20, 20, 25), "./models/bunny.obj", new Diffuse(Vec3(0.8, 0.8, 0.8)), 55, Vec3(1, -1, -1)));
+  //  			new Reflection(Vec3(0.95, 0.95, 0.95))));
+  add_object(new Sphere(Vec3(12, 31, 30), 6,
+			new Reflection(Vec3(0.95, 0.95, 0.95))));
+  add_object(new Sphere(Vec3(28, 33, 20), 5,
+			new Reflection(Vec3(0.98, 0.98, 0.98))));
+  // add_object(new MeshObject(Vec3(20, 20, 25), "./models/bunny.obj", new Diffuse(Vec3(0.8, 0.8, 0.8)), 55, Vec3(1, -1, -1)));
   // add_object(new MeshObject(Vec3(20, 20, 25), "./models/cube.obj", new Diffuse(Vec3(0.8, 0.8, 0.8)), 5));
   // walls
   // // front

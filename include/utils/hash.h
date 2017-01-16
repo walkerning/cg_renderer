@@ -45,6 +45,14 @@ struct HashMap {
   }
 
   void reset() {
+    for (auto item : hash_map) {
+      HashNode<V>* node = item.second;
+      while (node != NULL) {
+	HashNode<V>* next_node = node->next;
+	delete node;
+	node = next_node;
+      }
+    }
     hash_map.clear();
   }
 };

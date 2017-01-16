@@ -40,3 +40,5 @@ TODO
 - [ ] monitor the render process
 - [ ] 从snapshot开始训练那么写并不对... scale是自动曝光. 现在没拿出来. 而且initial radius重新来科学吗?
 - [ ] 并行化算法. 多个MCMC采样并行算? 一起sync的加到真的hitpoint上然后accumulate?
+- [ ] 怎么加入depth of field: stochastic photon mapping
+- [ ] GPU加速, BVH构建: https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/

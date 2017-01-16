@@ -24,8 +24,8 @@ void write_image(Vec3* im, int height, int width, double scale, std::string fnam
     sum += im_write[i].x + im_write[i].y + im_write[i].z;
   }
 
-  // try auto exposure
-  scale = 3 * 0.18 * len / sum;
+  // FIXME: simple auto exposure, try more auto exposure maybe?
+  scale = 3 * 0.3 * len / sum;
   // get normalized radiance
   image_scale(im_write, height, width, Vec3(scale, scale, scale));
   // gamma correction
